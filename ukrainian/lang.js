@@ -36,6 +36,8 @@
     name: 'Ukraiński', short: 'UA', inLang: 'po ukraińsku', storeKey: 'fiszki-ukrainski-v1',
     subtitle: 'Od alfabetu do poziomu C1', sample: 'Привіт! Як справи?',
     voices: [{ code: 'uk-UA', label: 'ukraiński' }], requireVoice: true,
+    // nagrania wszystkich słów i zdań (tools/make_audio.py); bez pliku → głos urządzenia, jeśli jest
+    audio: 'audio/', audioCredit: 'Nagrania: głos „Tetiana” (Piper, licencja Apache 2.0).',
     strip: null, keepFirst: null, translit: translit,
     keyboard: ['й ц у к е н г ш щ з х ї', 'ф і в а п р о л д ж є ґ', 'я ч с м и т ь б ю ʼ ⌫']
   };

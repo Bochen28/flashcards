@@ -157,9 +157,48 @@
     return exact.find(v => good.test(v.name)) || exact[0] || voices.find(v => lang(v).indexOf(want.slice(0, 2)) === 0) || null;
   }
   // gdy język wymaga własnego głosu (np. ukraiński), nie czytamy niczego obcym głosem
-  const canSpeak = () => TTS && (!L.requireVoice || !!bestVoice());
+  const canTTS = () => TTS && (!L.requireVoice || !!bestVoice());
+  // nagrania: L.audio to folder z plikach MP3 (nazwa = skrót tekstu, ten sam co w tools/saylist.js)
+  const AUDIO = !!L.audio && typeof window.Audio === 'function';
+  const canSpeak = () => AUDIO || canTTS();
+  function cyrb53(str) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  }
+  const audioName = t => cyrb53(t.trim()).toString(36) + '.mp3';
+  // jeden odtwarzacz na całą stronę: iPhone po pierwszym dotknięciu pozwala mu grać także z opóźnieniem (np. kolejna fiszka)
+  let player = null, playing = null;
+  function playFile(text, slow) {
+    if (!player) {
+      player = new Audio();
+      player.preload = 'auto';
+      // brak pliku (np. nowe słowo bez nagrania) → głos urządzenia, jeśli jest
+      player.addEventListener('error', () => { const p = playing; playing = null; if (p) ttsSpeak(p.text, p.slow); });
+    }
+    const a = player, rate = slow ? 0.7 : (S.settings.rate < 0.9 ? 0.85 : 1);
+    try { a.pause(); } catch (e) { /* */ }
+    playing = { text: text, slow: slow };
+    a.src = L.audio + audioName(text);
+    a.defaultPlaybackRate = rate; a.playbackRate = rate;
+    a.preservesPitch = true;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => { /* autoodtwarzanie zablokowane – trudno */ });
+  }
   function speak(text, slow) {
-    if (!canSpeak() || !text) return;
+    if (!text) return;
+    if (AUDIO) playFile(text, slow); else ttsSpeak(text, slow);
+  }
+  function ttsSpeak(text, slow) {
+    if (!canTTS() || !text) return;
     try {
       const ss = window.speechSynthesis;
       if (ss.speaking || ss.pending) ss.cancel();
@@ -172,7 +211,10 @@
     } catch (e) { /* brak mowy – trudno */ }
   }
   const autoSay = t => { if (S.settings.auto) speak(t); };
-  function stopSpeech() { if (TTS) { try { window.speechSynthesis.cancel(); } catch (e) { /* */ } } }
+  function stopSpeech() {
+    if (player) { try { player.pause(); } catch (e) { /* */ } playing = null; }
+    if (TTS) { try { window.speechSynthesis.cancel(); } catch (e) { /* */ } }
+  }
   const spkBtn = (say, cls) => canSpeak() ? '<button class="spk ' + (cls || '') + '" data-say="' + esc(say) + '" aria-label="Posłuchaj wymowy">' + icon('speaker') + '</button>' : '';
   // transkrypcja (np. ukraińska cyrylica zapisana polskimi literami)
   const tl = t => (L.translit && S.settings.translit && t) ? '<span class="tl">' + esc(L.translit(t)) + '</span>' : '';
@@ -362,7 +404,8 @@
       (L.translit ? '<label class="set-row"><span>Pokazuj wymowę polskimi literami</span><input type="checkbox" class="switch" id="set-tl"' + (s.translit ? ' checked' : '') + '></label>' : '') +
       (L.voices.length > 1 ? '<div class="set-row"><span>Akcent</span><div class="seg">' + L.voices.map(v => seg('accent', v.code, v.label)).join('') + '</div></div>' : '') +
       '<div class="set-row"><span>Tempo mowy</span><div class="seg">' + seg('rate', 0.75, 'wolniej') + seg('rate', 0.9, 'normalnie') + '</div></div>' +
-      (canSpeak() ? '<button class="btn soft wide" data-act="test">🔊 Wypróbuj głos</button>'
+      (canSpeak() ? '<button class="btn soft wide" data-act="test">🔊 Wypróbuj głos</button>' +
+          (AUDIO && L.audioCredit ? '<p class="muted small">' + esc(L.audioCredit) + '</p>' : '')
         : '<p class="note">' + (TTS && L.requireVoice ? 'Ta przeglądarka nie ma głosu dla tego języka, więc czytanie na głos jest wyłączone. Spróbuj w przeglądarce Edge, Safari albo na Androidzie.' : 'Ta przeglądarka nie obsługuje czytania na głos.') + '</p>') +
       '<hr>' +
       '<p class="muted small">Postępy (gwiazdki, błędy do powtórki, seria dni) zapisują się tylko w tej przeglądarce na tym urządzeniu.</p>' +
