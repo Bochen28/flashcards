@@ -702,3 +702,5 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 100%;
 .lesson-end { display: grid; gap: 12px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 .lesson-end h2 { font-size: 1.1rem; font-weight: 900; }
 .lesson-end .res-actions { max-width: none; margin-top: 4px; }
+.kb-extra { margin-top: 0; }
+.kb-extra .kb-key { height: 40px; font-size: 1.15rem; }

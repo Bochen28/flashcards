@@ -233,6 +233,9 @@
   const spkBtn = (say, cls) => canSpeak() ? '<button class="spk ' + (cls || '') + '" data-say="' + esc(say) + '" aria-label="Posłuchaj wymowy">' + icon('speaker') + '</button>' : '';
   // transkrypcja (np. ukraińska cyrylica zapisana polskimi literami)
   const tl = t => (L.translit && S.settings.translit && t) ? '<span class="tl">' + esc(L.translit(t)) + '</span>' : '';
+  // dodatkowy rząd znaków (np. á é ñ ¿) nad zwykłą klawiaturą urządzenia
+  const extraKeysHTML = () => '<div class="kb kb-extra" aria-label="Znaki specjalne"><div class="kb-row">' +
+    L.extraKeys.split(' ').map(k => '<button class="kb-key" data-k="' + esc(k) + '">' + esc(k) + '</button>').join('') + '</div></div>';
   function keyboardHTML() {
     return '<div class="kb" aria-label="Klawiatura">' + L.keyboard.map(row => '<div class="kb-row">' + row.split(' ').map(k =>
       k === '⌫' ? '<button class="kb-key wide" data-k="bs" aria-label="Usuń literę">⌫</button>'
@@ -706,7 +709,7 @@
   function normWord(s) {
     s = s.toLowerCase()
       .replace(/[’‘`´ʼ]/g, "'")
-      .replace(/[.,!?;:"„”«»()]/g, ' ')
+      .replace(/[.,!?;:"„”«»()¿¡]/g, ' ')
       .trim();
     if (L.strip) s = s.replace(L.strip, '');
     return s.replace(/[\s'-]+/g, '');
@@ -730,14 +733,22 @@
     if (!v) return 'bad';
     const alts = it.en.split('/').map(normWord);
     if (alts.indexOf(v) >= 0) return 'ok';
-    if (!it.lv.strict && alts.some(a => a.length >= 4 && lev(a, v) <= 1)) return 'typo';
+    if (it.lv.strict) return 'bad';
+    if (alts.some(a => a.length >= 4 && lev(a, v) <= 1)) return 'typo';
+    // brak akcentu (á → a) albo brak rodzajnika (el libro → libro): zaliczamy, ale pokazujemy poprawną formę
+    const fold = s => L.foldAccents ? s.normalize('NFD').replace(/[\u0301\u0308]/g, '').normalize('NFC') : s;
+    if (L.foldAccents && alts.some(a => fold(a) === fold(v))) return 'typo';
+    if (L.softStrip) {
+      const bare = it.en.split('/').map(a => normWord(a.toLowerCase().replace(L.softStrip, '')));
+      if (bare.some(a => fold(a) === fold(v))) return 'typo';
+    }
     return 'bad';
   }
 
   /* --- sentence ordering --- */
-  const normSent = s => s.toLowerCase().replace(/[’‘ʼ]/g, "'").replace(/[.,!?;:«»—–]/g, '').replace(/\s+/g, ' ').trim();
+  const normSent = s => s.toLowerCase().replace(/[’‘ʼ]/g, "'").replace(/[.,!?;:«»—–¿¡]/g, '').replace(/\s+/g, ' ').trim();
   function tilesFor(s) {
-    const w = s.replace(/[.,!?;:«»]/g, '').split(/\s+/).filter(x => x && x !== '—' && x !== '–');
+    const w = s.replace(/[.,!?;:«»¿¡]/g, '').split(/\s+/).filter(x => x && x !== '—' && x !== '–');
     if (w.length && !(L.keepFirst && L.keepFirst.test(w[0]))) w[0] = w[0].charAt(0).toLowerCase() + w[0].slice(1);
     return w;
   }
@@ -784,7 +795,7 @@
           '<input class="answer-input" id="ans" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"' +
             (L.keyboard ? ' inputmode="none"' : '') + ' placeholder="Wpisz ' + L.inLang + '…" aria-label="Twoja odpowiedź">' +
           '<div class="hint-line" id="hint" aria-live="polite"></div>' +
-          (L.keyboard ? keyboardHTML() : '') +
+          (L.keyboard ? keyboardHTML() : L.extraKeys ? extraKeysHTML() : '') +
           '<div class="type-actions">' +
             '<button class="btn ghost" data-act="hint">💡 Podpowiedź</button>' +
             '<button class="btn ghost" data-act="skip">Nie wiem</button>' +
@@ -804,6 +815,7 @@
           if (k === 'bs') inp.setRangeText('', s === en ? Math.max(0, s - 1) : s, en, 'end');
           else inp.setRangeText(k, s, en, 'end');
           inp.classList.remove('shake');
+          if (!L.keyboard) inp.focus(); // przy klawiaturze telefonu wracamy kursorem do pola
         });
       }
       const showHint = () => {
