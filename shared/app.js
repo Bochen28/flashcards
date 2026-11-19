@@ -78,6 +78,20 @@
   });
 
   const TOTAL = LEVELS.reduce((a, l) => a + l.items.length, 0);
+
+  /* lekcje: wyjaśnienia zasad, każda stoi na ścieżce przed poziomem `before` i odsyła do poziomów `practice` */
+  const LESSONS = [], LESSON_BY = {}, LESSON_BEFORE = {}, LESSON_FOR = {};
+  (window.LESSONS || []).forEach(ls => {
+    if (!ls || !ls.id || LESSON_BY[ls.id]) return;
+    const si = STAGES.findIndex(s => s.id === ls.stage);
+    if (si < 0) return;
+    ls.si = si;
+    ls.practice = (ls.practice || []).filter(id => BY_ID[id]);
+    const at = BY_ID[ls.before] && BY_ID[ls.before].stage === si ? ls.before : (STAGES[si].levels[0] || {}).id;
+    (LESSON_BEFORE[at] = LESSON_BEFORE[at] || []).push(ls);
+    [ls.before].concat(ls.practice).forEach(id => { if (BY_ID[id] && !LESSON_FOR[id]) LESSON_FOR[id] = ls; });
+    LESSONS.push(ls); LESSON_BY[ls.id] = ls;
+  });
   const fmt = n => n.toLocaleString('pl-PL');
   const enShow = it => it.en.split('/').join(' / ');
   const sayText = it => it.lv.k === 'f' ? it.full.replace(/\s*→\s*/g, ', ') : (it.lv.k === 'v' ? it.en.split('/')[0] : it.en);
@@ -97,7 +111,7 @@
   /* ---------------- saved progress ---------------- */
   function freshState(settings) {
     return {
-      stars: {}, mistakes: {}, streak: { last: '', n: 0 },
+      stars: {}, mistakes: {}, read: {}, streak: { last: '', n: 0 },
       settings: Object.assign({ auto: true, accent: L.voices[0].code, rate: 0.9, translit: true }, settings || {})
     };
   }
@@ -108,6 +122,7 @@
     if (d) {
       s.stars = d.stars || {};
       s.mistakes = d.mistakes || {};
+      s.read = d.read || {};
       s.streak = d.streak || s.streak;
     }
     Object.keys(s.mistakes).forEach(k => { if (!ITEMS[k]) delete s.mistakes[k]; });
@@ -293,13 +308,29 @@
       '<span class="lvl-meta"><span class="lvl-k">' + KIND[l.k] + '</span>' + starsHTML(st) + '</span>' +
       '</button>';
   }
+  function lessonTileHTML(ls, isNext) {
+    const rd = !!S.read[ls.id];
+    return '<button class="lvl lesson' + (rd ? ' done' : '') + (isNext ? ' next' : '') + '" data-lesson="' + esc(ls.id) + '">' +
+      (isNext ? '<span class="now">Teraz</span>' : '') +
+      '<span class="lvl-num" aria-hidden="true">📖</span>' +
+      '<span class="lvl-t">' + esc(ls.t) + '</span>' +
+      '<span class="lvl-meta"><span class="lvl-k">Lekcja</span>' + (rd ? '<span class="read-mark">✓ przeczytana</span>' : '') + '</span>' +
+      '</button>';
+  }
+  // co pokazać jako „następne”: nieprzeczytana lekcja tuż przed następnym poziomem albo sam poziom
+  function nextStep() {
+    const lv = continueLevel();
+    const ls = (LESSON_BEFORE[lv.id] || []).find(x => !S.read[x.id]);
+    return { lv: lv, ls: ls || null };
+  }
 
   function renderHome() {
     onHome = true; keyHandler = null; Q = null; F = null;
     stopSpeech();
     const done = LEVELS.filter(l => levelStars(l) > 0).length;
     const stars = LEVELS.reduce((a, l) => a + levelStars(l), 0);
-    const next = continueLevel();
+    const step = nextStep(), next = step.lv;
+    const nLessons = LESSONS.length;
     const mist = mistakeList().length;
     const streak = streakNow();
     const pct = Math.round(done / LEVELS.length * 100);
@@ -316,10 +347,12 @@
           '<div><b>' + streak + '<small>🔥</small></b><span>' + (streak === 1 ? 'dzień' : 'dni') + ' z rzędu</span></div>' +
         '</div>' +
         '<div class="bar light" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
-        '<p class="hero-count">📚 ' + fmt(TOTAL) + ' ' + plural(TOTAL, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' w ' + LEVELS.length + ' poziomach</p>' +
-        (done === 0 ? '<p class="hero-tip">Każdy poziom ma <b>📇 fiszki</b> do nauki i <b>✏️ ćwiczenia</b>, za które zdobywasz gwiazdki. Poziomy idą od najłatwiejszych do coraz trudniejszych.</p>' : '') +
+        '<p class="hero-count">📚 ' + fmt(TOTAL) + ' ' + plural(TOTAL, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' w ' + LEVELS.length + ' poziomach' +
+          (nLessons ? ' · 📖 ' + nLessons + ' ' + plural(nLessons, 'lekcja', 'lekcje', 'lekcji') : '') + '</p>' +
+        (done === 0 ? '<p class="hero-tip">' + (nLessons ? '<b>📖 Lekcje</b> wyjaśniają zasady krok po kroku. ' : '') + 'Każdy poziom ma <b>📇 fiszki</b> do nauki i <b>✏️ ćwiczenia</b>, za które zdobywasz gwiazdki. Poziomy idą od najłatwiejszych do coraz trudniejszych.</p>' : '') +
         '<div class="hero-actions">' +
-          '<button class="btn white big" data-act="continue">▶ ' + (done ? 'Kontynuuj' : 'Zacznij') + ': <span class="ellip">' + next.num + '. ' + esc(next.t) + '</span></button>' +
+          '<button class="btn white big" data-act="continue">▶ ' + (done ? 'Kontynuuj' : 'Zacznij') + ': <span class="ellip">' +
+            (step.ls ? '📖 ' + esc(step.ls.t) : next.num + '. ' + esc(next.t)) + '</span></button>' +
           (mist ? '<button class="btn glass" data-act="review">🔁 Powtórka błędów <span class="pill">' + mist + '</span></button>' : '') +
         '</div>' +
       '</section>';
@@ -329,19 +362,23 @@
       if (!st.levels.length) return;
       const d = st.levels.filter(l => levelStars(l) > 0).length;
       const n = st.levels.reduce((a, l) => a + l.items.length, 0);
+      const nl = LESSONS.filter(x => x.si === si).length;
       const open = openStages.has(si);
+      const tiles = () => st.levels.map(l => (LESSON_BEFORE[l.id] || []).map(x => lessonTileHTML(x, x === step.ls)).join('') +
+        tileHTML(l, l === next && !step.ls)).join('');
       h += '<section class="stage' + (open ? ' open' : '') + '" style="--c:var(--s' + (si + 1) + ')">' +
         '<button class="stage-head" data-stage="' + si + '" aria-expanded="' + open + '">' +
           '<span class="stage-no">' + (si + 1) + '</span>' +
           '<span class="stage-info">' +
             '<span class="stage-name">' + esc(st.name) + ' <span class="tag">' + esc(st.tag) + '</span></span>' +
-            '<span class="stage-sub">' + st.levels.length + ' ' + plural(st.levels.length, 'poziom', 'poziomy', 'poziomów') + ' · ' + fmt(n) + ' ' + plural(n, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + '</span>' +
+            '<span class="stage-sub">' + st.levels.length + ' ' + plural(st.levels.length, 'poziom', 'poziomy', 'poziomów') + ' · ' + fmt(n) + ' ' + plural(n, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') +
+              (nl ? ' · ' + nl + ' ' + plural(nl, 'lekcja', 'lekcje', 'lekcji') : '') + '</span>' +
             '<span class="stage-bar"><i style="width:' + Math.round(d / st.levels.length * 100) + '%"></i></span>' +
           '</span>' +
           '<span class="stage-count">' + d + '/' + st.levels.length + '</span>' +
           '<span class="chev" aria-hidden="true">›</span>' +
         '</button>' +
-        (open ? '<div class="grid">' + st.levels.map(l => tileHTML(l, l === next)).join('') + '</div>' : '') +
+        (open ? '<div class="grid">' + tiles() + '</div>' : '') +
         '</section>';
     });
     h += '<footer class="foot">Postępy zapisują się automatycznie w tej przeglądarce.<br>Powodzenia! Good luck! 🍀</footer></div>';
@@ -352,6 +389,8 @@
     $('.home', app).addEventListener('click', e => {
       const t = e.target.closest('[data-lv]');
       if (t) { openLevel(BY_ID[t.getAttribute('data-lv')]); return; }
+      const lt = e.target.closest('[data-lesson]');
+      if (lt) { openLesson(LESSON_BY[lt.getAttribute('data-lesson')], true); return; }
       const sh = e.target.closest('[data-stage]');
       if (sh) {
         const si = +sh.getAttribute('data-stage');
@@ -363,7 +402,7 @@
       const b = e.target.closest('[data-act]');
       if (!b) return;
       const act = b.getAttribute('data-act');
-      if (act === 'continue') openLevel(next);
+      if (act === 'continue') { if (step.ls) openLesson(step.ls, true); else openLevel(next); }
       else if (act === 'review') startReview(true);
       else if (act === 'settings') openSettings();
     });
@@ -382,6 +421,8 @@
       '<p class="sheet-desc">' + esc(lv.d) + '</p>' +
       '<div class="chips">' + chips + '</div>' +
       '<div class="sheet-stars">' + starsHTML(st, 'lg') + '<span>' + (st ? 'Twój najlepszy wynik' : 'Jeszcze bez gwiazdek') + '</span></div>' +
+      (LESSON_FOR[lv.id] ? '<button class="btn ghost wide lesson-link" data-act="lesson"><span>📖</span><span class="ellip">Lekcja: ' + esc(LESSON_FOR[lv.id].t) + '</span>' +
+        (S.read[LESSON_FOR[lv.id].id] ? '<span class="read-mark">✓</span>' : '') + '</button>' : '') +
       '<div class="sheet-actions">' +
         '<button class="btn soft big" data-act="flash"><span class="b-ico">📇</span><span class="b-txt">Fiszki<small>poznaj i zapamiętaj</small></span></button>' +
         '<button class="btn primary big" data-act="quiz"><span class="b-ico">✏️</span><span class="b-txt">Ćwiczenia<small>sprawdź się, zdobądź ★</small></span></button>' +
@@ -391,8 +432,90 @@
         closeSheet();
         if (act === 'flash') startFlash(lv, push);
         else if (act === 'quiz') startQuiz(lv, push);
+        else if (act === 'lesson') openLesson(LESSON_FOR[lv.id], push);
       }
     );
+  }
+
+  /* ---------------- lessons ---------------- */
+  // Prosty zapis treści lekcji (jedna rzecz na linię):
+  //   ## Nagłówek      - punkt listy      | komórka | komórka   (pierwszy wiersz tabeli = nagłówek)
+  //   > obce zdanie | tłumaczenie   (przykład z wymową)      ! wskazówka      !! uwaga / pułapka
+  //   zwykłe linie = akapit, pusta linia kończy akapit; **pogrubienie**
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const cells = row => row.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+  function lessonBody(src) {
+    let h = '', buf = [], kind = '';
+    const flush = () => {
+      if (!buf.length) return;
+      if (kind === 'p') h += '<p>' + buf.map(inl).join(' ') + '</p>';
+      else if (kind === 'ul') h += '<ul>' + buf.map(x => '<li>' + inl(x) + '</li>').join('') + '</ul>';
+      else if (kind === 'ex') h += '<div class="ls-exs">' + buf.map(x => {
+        const i = x.indexOf('|');
+        const fo = (i < 0 ? x : x.slice(0, i)).trim(), pl = i < 0 ? '' : x.slice(i + 1).trim();
+        const say = fo.replace(/\*\*/g, '');
+        return '<div class="ls-ex"><div class="ls-fo"><span class="ls-fo-t">' + inl(fo) + '</span>' + tl(say) +
+          (pl ? '<span class="ls-pl">' + inl(pl) + '</span>' : '') + '</div>' + spkBtn(say, 'sm') + '</div>';
+      }).join('') + '</div>';
+      else if (kind === 'tb') {
+        const [head, ...rows] = buf.map(cells);
+        h += '<div class="ls-table"><table><thead><tr>' + head.map(c => '<th>' + inl(c) + '</th>').join('') + '</tr></thead><tbody>' +
+          rows.map(r => '<tr>' + r.map(c => '<td>' + inl(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+      }
+      buf = []; kind = '';
+    };
+    const add = (k, v) => { if (kind !== k) flush(); kind = k; buf.push(v); };
+    String(src || '').split('\n').forEach(raw => {
+      const t = raw.trim();
+      if (!t) flush();
+      else if (t.startsWith('## ')) { flush(); h += '<h2>' + inl(t.slice(3)) + '</h2>'; }
+      else if (t.startsWith('!! ')) { flush(); h += '<div class="ls-box warn"><span aria-hidden="true">⚠️</span><div>' + inl(t.slice(3)) + '</div></div>'; }
+      else if (t.startsWith('! ')) { flush(); h += '<div class="ls-box tip"><span aria-hidden="true">💡</span><div>' + inl(t.slice(2)) + '</div></div>'; }
+      else if (t.startsWith('- ')) add('ul', t.slice(2));
+      else if (t.startsWith('> ')) add('ex', t.slice(2));
+      else if (t.startsWith('|')) add('tb', t);
+      else add('p', t);
+    });
+    flush();
+    return h;
+  }
+
+  function openLesson(ls, push) {
+    if (!ls) return;
+    if (push) pushScreen();
+    onHome = false; keyHandler = null; Q = null; F = null;
+    stopSpeech();
+    S.read[ls.id] = 1; save();
+    const i = LESSONS.indexOf(ls), nextLs = LESSONS.slice(i + 1).find(x => x.si === ls.si);
+    app.innerHTML =
+      '<div class="play lesson-screen" style="--c:var(--s' + (ls.si + 1) + ')">' +
+        '<div class="play-top">' +
+          '<button class="icon-btn" data-act="close" aria-label="Zamknij lekcję">' + icon('close') + '</button>' +
+          '<span class="play-title">📖 Lekcja · Etap ' + (ls.si + 1) + ' · ' + esc(STAGES[ls.si].tag) + '</span>' +
+        '</div>' +
+        '<article class="lesson">' +
+          '<h1>' + esc(ls.t) + '</h1>' +
+          (ls.d ? '<p class="ls-lead">' + esc(ls.d) + '</p>' : '') +
+          lessonBody(ls.body) +
+        '</article>' +
+        '<section class="lesson-end">' +
+          (ls.practice.length ? '<h2>✏️ Przećwicz to</h2><div class="grid">' + ls.practice.map(id => tileHTML(BY_ID[id], false)).join('') + '</div>' : '') +
+          '<div class="res-actions">' +
+            '<button class="btn primary big" data-act="close">Gotowe ✓</button>' +
+            (nextLs ? '<button class="btn soft" data-act="next-lesson">Następna lekcja: ' + esc(nextLs.t) + ' ›</button>' : '') +
+          '</div>' +
+        '</section>' +
+      '</div>';
+    window.scrollTo(0, 0);
+    $('.lesson-screen', app).addEventListener('click', e => {
+      const t = e.target.closest('[data-lv]');
+      if (t) { openLevel(BY_ID[t.getAttribute('data-lv')]); return; }
+      const b = e.target.closest('[data-act]');
+      if (!b) return;
+      const act = b.getAttribute('data-act');
+      if (act === 'close') goHome();
+      else if (act === 'next-lesson') openLesson(nextLs, false);
+    });
   }
 
   function openSettings() {

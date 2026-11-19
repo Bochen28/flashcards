@@ -657,3 +657,48 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 100%;
 .kb-key.wide { flex: 1.6 1 0; font-size: 1rem; }
 .kb-key.space { flex: 0 1 60%; font-size: .9rem; color: var(--muted); }
 @media (min-width: 560px) { .kb-key { height: 46px; } }
+
+/* ---------- lessons ---------- */
+.stage .lvl.lesson, .lvl.lesson {
+  background: color-mix(in srgb, var(--c, var(--primary)) 9%, var(--surface));
+  border-style: dashed;
+}
+.lvl.lesson .lvl-num { background: transparent; font-size: 1.25rem; }
+.lvl.lesson.done { border-style: solid; }
+.read-mark { font-size: .75rem; font-weight: 800; color: var(--ok-ink); }
+.lesson-link { justify-content: flex-start; gap: 8px; text-align: left; }
+.lesson-link .read-mark { margin-left: auto; }
+
+.play.lesson-screen { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+.lesson { padding: 14px 0 6px; line-height: 1.6; font-size: 1.02rem; }
+.lesson h1 { font-size: clamp(1.5rem, 6vw, 1.9rem); font-weight: 900; line-height: 1.2; }
+.lesson .ls-lead { color: var(--muted); font-size: 1.05rem; margin-top: 6px; }
+.lesson h2 {
+  font-size: 1.15rem; font-weight: 900; margin: 26px 0 8px;
+  padding-left: 10px; border-left: 4px solid var(--c, var(--primary));
+}
+.lesson p { margin: 10px 0; }
+.lesson ul { margin: 8px 0; padding-left: 22px; }
+.lesson li { margin: 4px 0; }
+.lesson b { font-weight: 800; }
+.ls-exs { display: grid; gap: 8px; margin: 12px 0; }
+.ls-ex {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px;
+}
+.ls-fo { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ls-fo-t { font-weight: 800; font-size: 1.08rem; line-height: 1.35; overflow-wrap: anywhere; }
+.ls-fo-t b { color: var(--c, var(--primary)); }
+.ls-pl { color: var(--text); opacity: .78; font-size: .92rem; line-height: 1.35; margin-top: 2px; }
+.ls-ex .tl { font-style: italic; font-size: .8rem; margin-top: 0; }
+.ls-ex .spk { flex: none; }
+.ls-table { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.ls-table table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+.ls-table th, .ls-table td { padding: 8px 12px; text-align: left; border-top: 1px solid var(--border); vertical-align: top; }
+.ls-table th { border-top: 0; background: var(--surface-2); font-weight: 800; }
+.ls-box { display: flex; gap: 10px; align-items: flex-start; border-radius: 14px; padding: 10px 12px; margin: 12px 0; font-size: .97rem; line-height: 1.5; }
+.ls-box.tip { background: var(--primary-soft); }
+.ls-box.warn { background: color-mix(in srgb, var(--fix) 16%, var(--surface)); }
+.lesson-end { display: grid; gap: 12px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.lesson-end h2 { font-size: 1.1rem; font-weight: 900; }
+.lesson-end .res-actions { max-width: none; margin-top: 4px; }

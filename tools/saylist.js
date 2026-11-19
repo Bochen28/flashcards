@@ -40,6 +40,19 @@ ctx.window.STAGES.forEach(st => st.levels.forEach(lv => {
   });
 }));
 
+// lesson examples: lines "> foreign | polish" in lessons/*.js (spoken text = foreign part without **, as in lessonBody())
+const ldir = path.join(dir, 'lessons');
+if (fs.existsSync(ldir)) {
+  fs.readdirSync(ldir).filter(f => f.endsWith('.js')).sort().forEach(f => run(path.join(ldir, f)));
+  (ctx.window.LESSONS || []).forEach(ls => String(ls.body || '').split('\n').forEach(raw => {
+    const t = raw.trim();
+    if (!t.startsWith('> ')) return;
+    const x = t.slice(2), i = x.indexOf('|');
+    const say = (i < 0 ? x : x.slice(0, i)).trim().replace(/\*\*/g, '');
+    if (say.trim()) texts.add(say);
+  }));
+}
+
 const out = [], seen = new Map();
 for (const t of texts) {
   const f = audioName(t);

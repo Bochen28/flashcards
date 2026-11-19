@@ -20,3 +20,15 @@ After adding or changing Ukrainian content, record the new texts (only missing f
 ```
 
 Setup instructions for `.tts/` (git-ignored) are at the top of `tools/make_audio.py`. A text without a recording falls back to the device's Ukrainian voice, if it has one.
+
+## Lessons
+
+Each language has short lessons in `lessons/*.js` that explain the rules in Polish. On the home screen a lesson sits right before the level given in `before`, and its end screen links to the levels in `practice`. Lesson text uses a simple line format:
+
+```
+## Heading                 - list item               | table | row |   (first row = header)
+> foreign sentence | Polish translation   (example with audio)
+! tip                      !! warning                plain lines = paragraph, **bold**
+```
+
+Check lessons with `node tools/check_lessons.js english` (or `ukrainian`). Ukrainian example sentences need recordings too: run `tools/make_audio.py` after adding lessons.

@@ -587,3 +587,7 @@ window.ADD = function (stageId, levels, afterId) {
   }
   st.levels.splice.apply(st.levels, [at, 0].concat(levels));
 };
+
+// Lekcje (wyjaśnienia zasad) – pliki lessons/*.js wywołują LESSON({ id, stage, before, practice, t, d, body }).
+window.LESSONS = window.LESSONS || [];
+window.LESSON = function () { for (var i = 0; i < arguments.length; i++) window.LESSONS.push(arguments[i]); };
