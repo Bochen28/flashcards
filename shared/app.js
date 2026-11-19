@@ -11,8 +11,54 @@
     strip: /^(to|a|an|the)\s+/, keepFirst: /^I($|')/, requireVoice: false, translit: null, keyboard: null
   }, window.LANG || {});
   const STORE_KEY = L.storeKey;
-  const KIND = { v: 'Słówka', f: 'Gramatyka', o: 'Zdania', m: 'Znaczenia' };
-  const PRAISE = ['Świetnie!', 'Brawo!', 'Dobrze!', 'Super!', 'Doskonale!', 'Tak jest!', 'Znakomicie!'];
+
+  /* teksty interfejsu – domyślnie po polsku; window.UI (np. ui-uk.js) może je podmienić dla innego języka interfejsu */
+  const T = Object.assign({
+    native: 'PL', cards: 'fiszki', locale: 'pl-PL',
+    plural: (n, one, few, many) => {
+      if (n === 1) return one;
+      const d = n % 10, h = n % 100;
+      return d >= 2 && d <= 4 && !(h >= 12 && h <= 14) ? few : many;
+    },
+    kind: { v: 'Słówka', f: 'Gramatyka', o: 'Zdania', m: 'Znaczenia' },
+    praise: ['Świetnie!', 'Brawo!', 'Dobrze!', 'Super!', 'Doskonale!', 'Tak jest!', 'Znakomicie!'],
+    listen: 'Posłuchaj wymowy', specialKeys: 'Znaki specjalne', keyboard: 'Klawiatura', delLetter: 'Usuń literę', space: 'spacja',
+    now: 'Teraz', lesson: 'Lekcja', read: '✓ przeczytana', settings: 'Ustawienia',
+    levelsDone: 'ukończone poziomy', starsW: ['gwiazdka', 'gwiazdki', 'gwiazdek'], day: 'dzień', days: 'dni', inARow: ' z rzędu',
+    exW: ['ćwiczenie', 'ćwiczenia', 'ćwiczeń'], inLevels: n => ' w ' + n + ' poziomach', lessonsW: ['lekcja', 'lekcje', 'lekcji'],
+    tipLessons: '<b>📖 Lekcje</b> wyjaśniają zasady krok po kroku. ',
+    tip: 'Każdy poziom ma <b>📇 fiszki</b> do nauki i <b>✏️ ćwiczenia</b>, za które zdobywasz gwiazdki. Poziomy idą od najłatwiejszych do coraz trudniejszych.',
+    cont: 'Kontynuuj', start: 'Zacznij', review: '🔁 Powtórka błędów', levelsW: ['poziom', 'poziomy', 'poziomów'],
+    foot: 'Postępy zapisują się automatycznie w tej przeglądarce.<br>Powodzenia! Good luck! 🍀',
+    stage: 'Etap', elemW: ['element', 'elementy', 'elementów'], best: 'Twój najlepszy wynik', noStars: 'Jeszcze bez gwiazdek', lessonColon: 'Lekcja: ',
+    flash: 'Fiszki', flashSub: 'poznaj i zapamiętaj', quiz: 'Ćwiczenia', quizSub: 'sprawdź się, zdobądź ★',
+    closeLesson: 'Zamknij lekcję', practice: '✏️ Przećwicz to', done: 'Gotowe ✓', nextLesson: 'Następna lekcja: ',
+    autoSpeak: 'Czytaj słowa na głos automatycznie', translit: 'Pokazuj wymowę polskimi literami', accent: 'Akcent',
+    rate: 'Tempo mowy', slower: 'wolniej', normal: 'normalnie', testVoice: '🔊 Wypróbuj głos',
+    noVoiceLang: 'Ta przeglądarka nie ma głosu dla tego języka, więc czytanie na głos jest wyłączone. Spróbuj w przeglądarce Edge, Safari albo na Androidzie.',
+    noVoice: 'Ta przeglądarka nie obsługuje czytania na głos.',
+    progressNote: 'Postępy (gwiazdki, błędy do powtórki, seria dni) zapisują się tylko w tej przeglądarce na tym urządzeniu.',
+    reset: 'Wyzeruj postępy', resetAsk: 'Na pewno usunąć wszystkie postępy? Tego nie da się cofnąć.',
+    endQuiz: 'Zakończ ćwiczenie', againTag: '↻ jeszcze raz', almost: 'Prawie idealnie!', wrong: 'Niestety nie…', correct: 'Poprawnie: ',
+    spelling: 'Uważaj na pisownię: ', next: 'Dalej',
+    whatMeans: 'Co to znaczy?', howSay: 'Jak to powiedzieć ', listenChoose: 'Posłuchaj i wybierz tłumaczenie', play: 'Odtwórz nagranie', slow: '🐢 wolniej',
+    write: 'Napisz ', typeIn: 'Wpisz ', yourAnswer: 'Twoja odpowiedź', hint: '💡 Podpowiedź', dontKnow: 'Nie wiem', check: 'Sprawdź',
+    fill: 'Uzupełnij zdanie', order: 'Ułóż zdanie ', yourSentence: 'Twoje zdanie', tapWords: 'Stukaj w słowa poniżej…', meaning: 'Co naprawdę znaczy to słowo?',
+    heads: [['💪', 'Spróbuj jeszcze raz'], ['👍', 'Nieźle!'], ['🎉', 'Bardzo dobrze!'], ['🏆', 'Perfekcyjnie!']], reviewDone: 'Powtórka zakończona!',
+    nextLevel: 'Następny poziom → ', flashFirst: '📇 Najpierw fiszki', retry: '↻ Jeszcze raz', reviewMore: '🔁 Powtarzaj dalej', menu: 'Menu', backMenu: 'Wróć do menu',
+    score: (ok, total, pct) => '<b>' + ok + '</b> z <b>' + total + '</b> dobrze za pierwszym razem (' + pct + '%)',
+    record: 'Nowy rekord na tym poziomie! ⭐',
+    starRule: 'Gwiazdkę dostajesz od 50% poprawnych odpowiedzi. Przejrzyj fiszki i spróbuj ponownie – dasz radę!',
+    lastLevel: 'To był ostatni poziom. Gratulacje – przeszedłeś cały kurs! 🎓', left: 'Pozostało do powtórki: ', allFixed: 'Wszystkie błędy poprawione! 🎉',
+    worth: 'Warto powtórzyć', fillBadge: 'Uzupełnij', howSayIt: 'Jak to powiesz ', closeFlash: 'Zamknij fiszki', know: 'Umiem', switchDir: 'Zmień kierunek',
+    hintTouch: 'Stuknij kartę, aby ją odwrócić · przesuń w prawo = umiem, w lewo = jeszcze nie',
+    hintMouse: 'Kliknij kartę lub naciśnij spację · → umiem · ← jeszcze nie',
+    notYet: '😕 Jeszcze nie', iKnow: '😊 Umiem', showAnswer: 'Pokaż odpowiedź', flashDone: 'Fiszki przerobione!',
+    flashKnown: (n, w, title) => 'Umiesz już wszystkie ' + n + ' ' + w + ' z poziomu „' + title + '”.', flashW: ['fiszkę', 'fiszki', 'fiszek'],
+    flashNext: 'Teraz sprawdź się w ćwiczeniach i zdobądź gwiazdki.', quizBtn: '✏️ Ćwiczenia', flashAgain: '📇 Jeszcze raz'
+  }, window.UI || {});
+  const KIND = T.kind;
+  const PRAISE = T.praise;
 
   /* ---------------- helpers ---------------- */
   const $ = (s, el) => (el || document).querySelector(s);
@@ -24,11 +70,8 @@
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
   }
-  function plural(n, one, few, many) {
-    if (n === 1) return one;
-    const d = n % 10, h = n % 100;
-    return d >= 2 && d <= 4 && !(h >= 12 && h <= 14) ? few : many;
-  }
+  const plural = (n, one, few, many) => T.plural(n, one, few, many);
+  const pluralW = (n, w) => T.plural(n, w[0], w[1], w[2]);
   const pad = n => String(n).padStart(2, '0');
   const dayStr = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   const isButtonFocused = () => document.activeElement && document.activeElement.tagName === 'BUTTON';
@@ -92,7 +135,7 @@
     [ls.before].concat(ls.practice).forEach(id => { if (BY_ID[id] && !LESSON_FOR[id]) LESSON_FOR[id] = ls; });
     LESSONS.push(ls); LESSON_BY[ls.id] = ls;
   });
-  const fmt = n => n.toLocaleString('pl-PL');
+  const fmt = n => n.toLocaleString(T.locale);
   const enShow = it => it.en.split('/').join(' / ');
   const sayText = it => it.lv.k === 'f' ? it.full.replace(/\s*→\s*/g, ', ') : (it.lv.k === 'v' ? it.en.split('/')[0] : it.en);
   function sentenceHTML(it, state) {
@@ -230,17 +273,17 @@
     if (player) { try { player.pause(); } catch (e) { /* */ } playing = null; }
     if (TTS) { try { window.speechSynthesis.cancel(); } catch (e) { /* */ } }
   }
-  const spkBtn = (say, cls) => canSpeak() ? '<button class="spk ' + (cls || '') + '" data-say="' + esc(say) + '" aria-label="Posłuchaj wymowy">' + icon('speaker') + '</button>' : '';
+  const spkBtn = (say, cls) => canSpeak() ? '<button class="spk ' + (cls || '') + '" data-say="' + esc(say) + '" aria-label="' + esc(T.listen) + '">' + icon('speaker') + '</button>' : '';
   // transkrypcja (np. ukraińska cyrylica zapisana polskimi literami)
   const tl = t => (L.translit && S.settings.translit && t) ? '<span class="tl">' + esc(L.translit(t)) + '</span>' : '';
   // dodatkowy rząd znaków (np. á é ñ ¿) nad zwykłą klawiaturą urządzenia
-  const extraKeysHTML = () => '<div class="kb kb-extra" aria-label="Znaki specjalne"><div class="kb-row">' +
+  const extraKeysHTML = () => '<div class="kb kb-extra" aria-label="' + esc(T.specialKeys) + '"><div class="kb-row">' +
     L.extraKeys.split(' ').map(k => '<button class="kb-key" data-k="' + esc(k) + '">' + esc(k) + '</button>').join('') + '</div></div>';
   function keyboardHTML() {
-    return '<div class="kb" aria-label="Klawiatura">' + L.keyboard.map(row => '<div class="kb-row">' + row.split(' ').map(k =>
-      k === '⌫' ? '<button class="kb-key wide" data-k="bs" aria-label="Usuń literę">⌫</button>'
+    return '<div class="kb" aria-label="' + esc(T.keyboard) + '">' + L.keyboard.map(row => '<div class="kb-row">' + row.split(' ').map(k =>
+      k === '⌫' ? '<button class="kb-key wide" data-k="bs" aria-label="' + esc(T.delLetter) + '">⌫</button>'
                 : '<button class="kb-key" data-k="' + esc(k) + '">' + esc(k) + '</button>').join('') + '</div>').join('') +
-      '<div class="kb-row"><button class="kb-key space" data-k=" ">spacja</button></div></div>';
+      '<div class="kb-row"><button class="kb-key space" data-k=" ">' + esc(T.space) + '</button></div></div>';
   }
 
   // każdy przycisk z data-say czyta tekst na głos
@@ -305,7 +348,7 @@
   function tileHTML(l, isNext) {
     const st = levelStars(l);
     return '<button class="lvl' + (st ? ' done' : '') + (isNext ? ' next' : '') + '" data-lv="' + l.id + '">' +
-      (isNext ? '<span class="now">Teraz</span>' : '') +
+      (isNext ? '<span class="now">' + T.now + '</span>' : '') +
       '<span class="lvl-num">' + l.num + '</span>' +
       '<span class="lvl-t">' + esc(l.t) + '</span>' +
       '<span class="lvl-meta"><span class="lvl-k">' + KIND[l.k] + '</span>' + starsHTML(st) + '</span>' +
@@ -314,10 +357,10 @@
   function lessonTileHTML(ls, isNext) {
     const rd = !!S.read[ls.id];
     return '<button class="lvl lesson' + (rd ? ' done' : '') + (isNext ? ' next' : '') + '" data-lesson="' + esc(ls.id) + '">' +
-      (isNext ? '<span class="now">Teraz</span>' : '') +
+      (isNext ? '<span class="now">' + T.now + '</span>' : '') +
       '<span class="lvl-num" aria-hidden="true">📖</span>' +
       '<span class="lvl-t">' + esc(ls.t) + '</span>' +
-      '<span class="lvl-meta"><span class="lvl-k">Lekcja</span>' + (rd ? '<span class="read-mark">✓ przeczytana</span>' : '') + '</span>' +
+      '<span class="lvl-meta"><span class="lvl-k">' + T.lesson + '</span>' + (rd ? '<span class="read-mark">' + T.read + '</span>' : '') + '</span>' +
       '</button>';
   }
   // co pokazać jako „następne”: nieprzeczytana lekcja tuż przed następnym poziomem albo sam poziom
@@ -340,23 +383,23 @@
 
     let h = '<div class="wrap home">' +
       '<header class="topbar">' +
-        '<div class="brand"><span class="logo" aria-hidden="true">' + esc(L.short) + '</span><div><h1>' + esc(L.name) + ' · fiszki</h1><p>' + esc(L.subtitle) + '</p></div></div>' +
-        '<button class="icon-btn" data-act="settings" aria-label="Ustawienia">' + icon('gear') + '</button>' +
+        '<div class="brand"><span class="logo" aria-hidden="true">' + esc(L.short) + '</span><div><h1>' + esc(L.name) + ' · ' + T.cards + '</h1><p>' + esc(L.subtitle) + '</p></div></div>' +
+        '<button class="icon-btn" data-act="settings" aria-label="' + esc(T.settings) + '">' + icon('gear') + '</button>' +
       '</header>' +
       '<section class="hero">' +
         '<div class="stats">' +
-          '<div><b>' + done + '<small>/' + LEVELS.length + '</small></b><span>ukończone poziomy</span></div>' +
-          '<div><b>' + stars + '<small>★</small></b><span>' + plural(stars, 'gwiazdka', 'gwiazdki', 'gwiazdek') + '</span></div>' +
-          '<div><b>' + streak + '<small>🔥</small></b><span>' + (streak === 1 ? 'dzień' : 'dni') + ' z rzędu</span></div>' +
+          '<div><b>' + done + '<small>/' + LEVELS.length + '</small></b><span>' + T.levelsDone + '</span></div>' +
+          '<div><b>' + stars + '<small>★</small></b><span>' + pluralW(stars, T.starsW) + '</span></div>' +
+          '<div><b>' + streak + '<small>🔥</small></b><span>' + (T.daysW ? pluralW(streak, T.daysW) : (streak === 1 ? T.day : T.days)) + T.inARow + '</span></div>' +
         '</div>' +
         '<div class="bar light" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
-        '<p class="hero-count">📚 ' + fmt(TOTAL) + ' ' + plural(TOTAL, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' w ' + LEVELS.length + ' poziomach' +
-          (nLessons ? ' · 📖 ' + nLessons + ' ' + plural(nLessons, 'lekcja', 'lekcje', 'lekcji') : '') + '</p>' +
-        (done === 0 ? '<p class="hero-tip">' + (nLessons ? '<b>📖 Lekcje</b> wyjaśniają zasady krok po kroku. ' : '') + 'Każdy poziom ma <b>📇 fiszki</b> do nauki i <b>✏️ ćwiczenia</b>, za które zdobywasz gwiazdki. Poziomy idą od najłatwiejszych do coraz trudniejszych.</p>' : '') +
+        '<p class="hero-count">📚 ' + fmt(TOTAL) + ' ' + pluralW(TOTAL, T.exW) + T.inLevels(LEVELS.length) +
+          (nLessons ? ' · 📖 ' + nLessons + ' ' + pluralW(nLessons, T.lessonsW) : '') + '</p>' +
+        (done === 0 ? '<p class="hero-tip">' + (nLessons ? T.tipLessons : '') + T.tip + '</p>' : '') +
         '<div class="hero-actions">' +
-          '<button class="btn white big" data-act="continue">▶ ' + (done ? 'Kontynuuj' : 'Zacznij') + ': <span class="ellip">' +
+          '<button class="btn white big" data-act="continue">▶ ' + (done ? T.cont : T.start) + ': <span class="ellip">' +
             (step.ls ? '📖 ' + esc(step.ls.t) : next.num + '. ' + esc(next.t)) + '</span></button>' +
-          (mist ? '<button class="btn glass" data-act="review">🔁 Powtórka błędów <span class="pill">' + mist + '</span></button>' : '') +
+          (mist ? '<button class="btn glass" data-act="review">' + T.review + ' <span class="pill">' + mist + '</span></button>' : '') +
         '</div>' +
       '</section>';
 
@@ -374,8 +417,8 @@
           '<span class="stage-no">' + (si + 1) + '</span>' +
           '<span class="stage-info">' +
             '<span class="stage-name">' + esc(st.name) + ' <span class="tag">' + esc(st.tag) + '</span></span>' +
-            '<span class="stage-sub">' + st.levels.length + ' ' + plural(st.levels.length, 'poziom', 'poziomy', 'poziomów') + ' · ' + fmt(n) + ' ' + plural(n, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') +
-              (nl ? ' · ' + nl + ' ' + plural(nl, 'lekcja', 'lekcje', 'lekcji') : '') + '</span>' +
+            '<span class="stage-sub">' + st.levels.length + ' ' + pluralW(st.levels.length, T.levelsW) + ' · ' + fmt(n) + ' ' + pluralW(n, T.exW) +
+              (nl ? ' · ' + nl + ' ' + pluralW(nl, T.lessonsW) : '') + '</span>' +
             '<span class="stage-bar"><i style="width:' + Math.round(d / st.levels.length * 100) + '%"></i></span>' +
           '</span>' +
           '<span class="stage-count">' + d + '/' + st.levels.length + '</span>' +
@@ -384,7 +427,7 @@
         (open ? '<div class="grid">' + tiles() + '</div>' : '') +
         '</section>';
     });
-    h += '<footer class="foot">Postępy zapisują się automatycznie w tej przeglądarce.<br>Powodzenia! Good luck! 🍀</footer></div>';
+    h += '<footer class="foot">' + T.foot + '</footer></div>';
 
     app.innerHTML = h;
     window.scrollTo(0, homeScroll);
@@ -419,16 +462,16 @@
     openSheet(
       '<div class="sheet-head" style="--c:var(--s' + (lv.stage + 1) + ')">' +
         '<span class="lvl-num big">' + lv.num + '</span>' +
-        '<div><p class="eyebrow">Etap ' + (lv.stage + 1) + ' · ' + KIND[lv.k] + ' · ' + lv.items.length + ' ' + plural(lv.items.length, 'element', 'elementy', 'elementów') + '</p><h2>' + esc(lv.t) + '</h2></div>' +
+        '<div><p class="eyebrow">' + T.stage + ' ' + (lv.stage + 1) + ' · ' + KIND[lv.k] + ' · ' + lv.items.length + ' ' + pluralW(lv.items.length, T.elemW) + '</p><h2>' + esc(lv.t) + '</h2></div>' +
       '</div>' +
       '<p class="sheet-desc">' + esc(lv.d) + '</p>' +
       '<div class="chips">' + chips + '</div>' +
-      '<div class="sheet-stars">' + starsHTML(st, 'lg') + '<span>' + (st ? 'Twój najlepszy wynik' : 'Jeszcze bez gwiazdek') + '</span></div>' +
-      (LESSON_FOR[lv.id] ? '<button class="btn ghost wide lesson-link" data-act="lesson"><span>📖</span><span class="ellip">Lekcja: ' + esc(LESSON_FOR[lv.id].t) + '</span>' +
+      '<div class="sheet-stars">' + starsHTML(st, 'lg') + '<span>' + (st ? T.best : T.noStars) + '</span></div>' +
+      (LESSON_FOR[lv.id] ? '<button class="btn ghost wide lesson-link" data-act="lesson"><span>📖</span><span class="ellip">' + T.lessonColon + esc(LESSON_FOR[lv.id].t) + '</span>' +
         (S.read[LESSON_FOR[lv.id].id] ? '<span class="read-mark">✓</span>' : '') + '</button>' : '') +
       '<div class="sheet-actions">' +
-        '<button class="btn soft big" data-act="flash"><span class="b-ico">📇</span><span class="b-txt">Fiszki<small>poznaj i zapamiętaj</small></span></button>' +
-        '<button class="btn primary big" data-act="quiz"><span class="b-ico">✏️</span><span class="b-txt">Ćwiczenia<small>sprawdź się, zdobądź ★</small></span></button>' +
+        '<button class="btn soft big" data-act="flash"><span class="b-ico">📇</span><span class="b-txt">' + T.flash + '<small>' + T.flashSub + '</small></span></button>' +
+        '<button class="btn primary big" data-act="quiz"><span class="b-ico">✏️</span><span class="b-txt">' + T.quiz + '<small>' + T.quizSub + '</small></span></button>' +
       '</div>',
       act => {
         const push = onHome;
@@ -493,8 +536,8 @@
     app.innerHTML =
       '<div class="play lesson-screen" style="--c:var(--s' + (ls.si + 1) + ')">' +
         '<div class="play-top">' +
-          '<button class="icon-btn" data-act="close" aria-label="Zamknij lekcję">' + icon('close') + '</button>' +
-          '<span class="play-title">📖 Lekcja · Etap ' + (ls.si + 1) + ' · ' + esc(STAGES[ls.si].tag) + '</span>' +
+          '<button class="icon-btn" data-act="close" aria-label="' + esc(T.closeLesson) + '">' + icon('close') + '</button>' +
+          '<span class="play-title">📖 ' + T.lesson + ' · ' + T.stage + ' ' + (ls.si + 1) + ' · ' + esc(STAGES[ls.si].tag) + '</span>' +
         '</div>' +
         '<article class="lesson">' +
           '<h1>' + esc(ls.t) + '</h1>' +
@@ -502,10 +545,10 @@
           lessonBody(ls.body) +
         '</article>' +
         '<section class="lesson-end">' +
-          (ls.practice.length ? '<h2>✏️ Przećwicz to</h2><div class="grid">' + ls.practice.map(id => tileHTML(BY_ID[id], false)).join('') + '</div>' : '') +
+          (ls.practice.length ? '<h2>' + T.practice + '</h2><div class="grid">' + ls.practice.map(id => tileHTML(BY_ID[id], false)).join('') + '</div>' : '') +
           '<div class="res-actions">' +
-            '<button class="btn primary big" data-act="close">Gotowe ✓</button>' +
-            (nextLs ? '<button class="btn soft" data-act="next-lesson">Następna lekcja: ' + esc(nextLs.t) + ' ›</button>' : '') +
+            '<button class="btn primary big" data-act="close">' + T.done + '</button>' +
+            (nextLs ? '<button class="btn soft" data-act="next-lesson">' + T.nextLesson + esc(nextLs.t) + ' ›</button>' : '') +
           '</div>' +
         '</section>' +
       '</div>';
@@ -525,17 +568,17 @@
     const s = S.settings;
     const seg = (name, val, label) => '<button class="seg-btn' + (s[name] === val ? ' on' : '') + '" data-act="set" data-k="' + name + '" data-v="' + val + '">' + label + '</button>';
     const el = openSheet(
-      '<h2 class="sheet-title">Ustawienia</h2>' +
-      '<label class="set-row"><span>Czytaj słowa na głos automatycznie</span><input type="checkbox" class="switch" id="set-auto"' + (s.auto ? ' checked' : '') + '></label>' +
-      (L.translit ? '<label class="set-row"><span>Pokazuj wymowę polskimi literami</span><input type="checkbox" class="switch" id="set-tl"' + (s.translit ? ' checked' : '') + '></label>' : '') +
-      (L.voices.length > 1 ? '<div class="set-row"><span>Akcent</span><div class="seg">' + L.voices.map(v => seg('accent', v.code, v.label)).join('') + '</div></div>' : '') +
-      '<div class="set-row"><span>Tempo mowy</span><div class="seg">' + seg('rate', 0.75, 'wolniej') + seg('rate', 0.9, 'normalnie') + '</div></div>' +
-      (canSpeak() ? '<button class="btn soft wide" data-act="test">🔊 Wypróbuj głos</button>' +
+      '<h2 class="sheet-title">' + T.settings + '</h2>' +
+      '<label class="set-row"><span>' + T.autoSpeak + '</span><input type="checkbox" class="switch" id="set-auto"' + (s.auto ? ' checked' : '') + '></label>' +
+      (L.translit ? '<label class="set-row"><span>' + T.translit + '</span><input type="checkbox" class="switch" id="set-tl"' + (s.translit ? ' checked' : '') + '></label>' : '') +
+      (L.voices.length > 1 ? '<div class="set-row"><span>' + T.accent + '</span><div class="seg">' + L.voices.map(v => seg('accent', v.code, v.label)).join('') + '</div></div>' : '') +
+      '<div class="set-row"><span>' + T.rate + '</span><div class="seg">' + seg('rate', 0.75, T.slower) + seg('rate', 0.9, T.normal) + '</div></div>' +
+      (canSpeak() ? '<button class="btn soft wide" data-act="test">' + T.testVoice + '</button>' +
           (AUDIO && L.audioCredit ? '<p class="muted small">' + esc(L.audioCredit) + '</p>' : '')
-        : '<p class="note">' + (TTS && L.requireVoice ? 'Ta przeglądarka nie ma głosu dla tego języka, więc czytanie na głos jest wyłączone. Spróbuj w przeglądarce Edge, Safari albo na Androidzie.' : 'Ta przeglądarka nie obsługuje czytania na głos.') + '</p>') +
+        : '<p class="note">' + (TTS && L.requireVoice ? T.noVoiceLang : T.noVoice) + '</p>') +
       '<hr>' +
-      '<p class="muted small">Postępy (gwiazdki, błędy do powtórki, seria dni) zapisują się tylko w tej przeglądarce na tym urządzeniu.</p>' +
-      '<button class="btn danger wide" data-act="reset">Wyzeruj postępy</button>',
+      '<p class="muted small">' + T.progressNote + '</p>' +
+      '<button class="btn danger wide" data-act="reset">' + T.reset + '</button>',
       (act, b) => {
         if (act === 'set') {
           const k = b.getAttribute('data-k');
@@ -547,7 +590,7 @@
         } else if (act === 'test') {
           speak(L.sample);
         } else if (act === 'reset') {
-          if (window.confirm('Na pewno usunąć wszystkie postępy? Tego nie da się cofnąć.')) {
+          if (window.confirm(T.resetAsk)) {
             S = freshState(S.settings); save();
             closeSheet(); homeScroll = 0; renderHome();
           }
@@ -599,15 +642,15 @@
     const q = Q.list[Q.idx];
     Q.cur = q; Q.answered = false;
     keyHandler = null;
-    const title = Q.review ? '🔁 Powtórka błędów' : Q.lv.num + '. ' + Q.lv.t;
+    const title = Q.review ? T.review : Q.lv.num + '. ' + Q.lv.t;
     app.innerHTML =
       '<div class="play">' +
         '<div class="play-top">' +
-          '<button class="icon-btn" data-act="close" aria-label="Zakończ ćwiczenie">' + icon('close') + '</button>' +
+          '<button class="icon-btn" data-act="close" aria-label="' + esc(T.endQuiz) + '">' + icon('close') + '</button>' +
           '<div class="bar"><i style="width:' + (Q.idx / Q.list.length * 100) + '%"></i></div>' +
           '<span class="counter">' + (Q.idx + 1) + '/' + Q.list.length + '</span>' +
         '</div>' +
-        '<div class="play-title">' + esc(title) + (q.tries ? ' <span class="again-tag">↻ jeszcze raz</span>' : '') + '</div>' +
+        '<div class="play-title">' + esc(title) + (q.tries ? ' <span class="again-tag">' + T.againTag + '</span>' : '') + '</div>' +
         '<div class="play-main pop" id="qm"></div>' +
       '</div>' +
       '<div class="feedback" id="fb" aria-live="polite"></div>';
@@ -681,13 +724,13 @@
   function feedback(ok, o) {
     o = o || {};
     const fb = $('#fb');
-    let body = '<strong class="fb-title">' + (ok ? (o.typo ? 'Prawie idealnie!' : pick(PRAISE)) : 'Niestety nie…') + '</strong>';
-    if (!ok && o.answer) body += '<div class="fb-line">Poprawnie: <b>' + esc(o.answer) + '</b>' + (o.foreign ? tl(o.answer) : '') + '</div>';
-    if (o.typo) body += '<div class="fb-line">Uważaj na pisownię: <b>' + esc(o.typo) + '</b></div>';
+    let body = '<strong class="fb-title">' + (ok ? (o.typo ? T.almost : pick(PRAISE)) : T.wrong) + '</strong>';
+    if (!ok && o.answer) body += '<div class="fb-line">' + T.correct + '<b>' + esc(o.answer) + '</b>' + (o.foreign ? tl(o.answer) : '') + '</div>';
+    if (o.typo) body += '<div class="fb-line">' + T.spelling + '<b>' + esc(o.typo) + '</b></div>';
     if (o.extra) body += '<div class="fb-line">' + esc(o.extra) + '</div>';
     if (o.tip) body += '<div class="fb-tip">💡 ' + esc(o.tip) + '</div>';
     fb.innerHTML = '<div class="fb-inner"><div class="fb-body"><span class="fb-icon" aria-hidden="true">' + (ok ? '✓' : '✗') + '</span><div>' + body + '</div></div>' +
-      '<button class="btn ' + (ok ? 'ok' : 'bad') + ' fb-next">Dalej</button></div>';
+      '<button class="btn ' + (ok ? 'ok' : 'bad') + ' fb-next">' + T.next + '</button></div>';
     fb.className = 'feedback show ' + (ok ? 'ok' : 'bad');
     const nb = $('.fb-next', fb);
     nb.addEventListener('click', nextQ);
@@ -756,14 +799,14 @@
   const MODES = {
     en2pl(q, el) {
       const it = q.it;
-      el.innerHTML = promptHTML('Co to znaczy?') + wordCard(it.em, enShow(it), sayText(it)) + '<div class="options"></div>';
+      el.innerHTML = promptHTML(T.whatMeans) + wordCard(it.em, enShow(it), sayText(it)) + '<div class="options"></div>';
       autoSay(sayText(it));
       choice(el, vocabOpts(it, 'pl'), it.pl, ok => feedback(ok, { answer: it.pl }));
     },
 
     pl2en(q, el) {
       const it = q.it;
-      el.innerHTML = promptHTML(it.lv.qp || 'Jak to powiedzieć ' + L.inLang + '?') + wordCard(it.em, it.pl) + '<div class="options"></div>';
+      el.innerHTML = promptHTML(it.lv.qp || T.howSay + L.inLang + '?') + wordCard(it.em, it.pl) + '<div class="options"></div>';
       choice(el, vocabOpts(it, 'en'), enShow(it), ok => {
         autoSay(sayText(it));
         feedback(ok, { answer: enShow(it), foreign: true });
@@ -772,10 +815,10 @@
 
     listen(q, el) {
       const it = q.it, t = sayText(it);
-      el.innerHTML = promptHTML('Posłuchaj i wybierz tłumaczenie') +
+      el.innerHTML = promptHTML(T.listenChoose) +
         '<div class="q-card listen">' +
-          '<button class="big-spk" data-say="' + esc(t) + '" aria-label="Odtwórz nagranie">' + icon('speaker', 44) + '</button>' +
-          '<button class="slow-btn" data-say="' + esc(t) + '" data-slow>🐢 wolniej</button>' +
+          '<button class="big-spk" data-say="' + esc(t) + '" aria-label="' + esc(T.play) + '">' + icon('speaker', 44) + '</button>' +
+          '<button class="slow-btn" data-say="' + esc(t) + '" data-slow>' + T.slow + '</button>' +
           '<div class="reveal" hidden>' + (it.em ? '<span class="q-emoji sm">' + esc(it.em) + '</span>' : '') + '<span class="q-word">' + esc(enShow(it)) + '</span>' + tl(enShow(it)) + '</div>' +
         '</div>' +
         '<div class="options"></div>';
@@ -790,16 +833,16 @@
       const it = q.it;
       const target = it.en.split('/')[0];
       let hints = 0;
-      el.innerHTML = promptHTML(it.lv.qp || 'Napisz ' + L.inLang + ':') + wordCard(it.em, it.pl) +
+      el.innerHTML = promptHTML(it.lv.qp || T.write + L.inLang + ':') + wordCard(it.em, it.pl) +
         '<div class="type-box">' +
           '<input class="answer-input" id="ans" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"' +
-            (L.keyboard ? ' inputmode="none"' : '') + ' placeholder="Wpisz ' + L.inLang + '…" aria-label="Twoja odpowiedź">' +
+            (L.keyboard ? ' inputmode="none"' : '') + ' placeholder="' + esc(T.typeIn + L.inLang) + '…" aria-label="' + esc(T.yourAnswer) + '">' +
           '<div class="hint-line" id="hint" aria-live="polite"></div>' +
           (L.keyboard ? keyboardHTML() : L.extraKeys ? extraKeysHTML() : '') +
           '<div class="type-actions">' +
-            '<button class="btn ghost" data-act="hint">💡 Podpowiedź</button>' +
-            '<button class="btn ghost" data-act="skip">Nie wiem</button>' +
-            '<button class="btn primary" data-act="check">Sprawdź</button>' +
+            '<button class="btn ghost" data-act="hint">' + T.hint + '</button>' +
+            '<button class="btn ghost" data-act="skip">' + T.dontKnow + '</button>' +
+            '<button class="btn primary" data-act="check">' + T.check + '</button>' +
           '</div>' +
         '</div>';
       const inp = $('#ans', el), hintEl = $('#hint', el);
@@ -859,7 +902,7 @@
 
     fill(q, el) {
       const it = q.it;
-      el.innerHTML = promptHTML('Uzupełnij zdanie') +
+      el.innerHTML = promptHTML(T.fill) +
         '<div class="q-card"><div class="sentence" id="sent">' + sentenceHTML(it) + '</div>' + tl(it.s.replace(/\{[^}]+\}/, '___')) + '<div class="q-pl">' + esc(it.pl) + '</div></div>' +
         '<div class="options"></div>';
       choice(el, shuffle([it.ans].concat(it.opts)), it.ans, ok => {
@@ -875,16 +918,16 @@
       let order = shuffle(words.map((w, i) => i));
       for (let k = 0; k < 6 && words.length > 2 && order.every((v, i) => words[v] === words[i]); k++) order = shuffle(order);
       const placed = [];
-      el.innerHTML = promptHTML('Ułóż zdanie ' + L.inLang) +
+      el.innerHTML = promptHTML(T.order + L.inLang) +
         '<div class="q-card"><div class="q-word mid">' + esc(it.pl) + '</div></div>' +
-        '<div class="zone" id="zone" aria-label="Twoje zdanie"></div>' +
+        '<div class="zone" id="zone" aria-label="' + esc(T.yourSentence) + '"></div>' +
         '<div class="bank" id="bank"></div>' +
-        '<button class="btn primary wide" id="chk" disabled>Sprawdź</button>';
+        '<button class="btn primary wide" id="chk" disabled>' + T.check + '</button>';
       const zone = $('#zone', el), bank = $('#bank', el), chk = $('#chk', el);
       const draw = () => {
         zone.innerHTML = placed.length
           ? placed.map((ti, p) => '<button class="tile" data-p="' + p + '">' + esc(words[ti]) + '</button>').join('')
-          : '<span class="zone-ph">Stukaj w słowa poniżej…</span>';
+          : '<span class="zone-ph">' + T.tapWords + '</span>';
         bank.innerHTML = order.map(ti => {
           const used = placed.indexOf(ti) >= 0;
           return '<button class="tile' + (used ? ' used' : '') + '" data-t="' + ti + '"' + (used ? ' disabled tabindex="-1"' : '') + '>' + esc(words[ti]) + '</button>';
@@ -925,7 +968,7 @@
 
     meaning(q, el) {
       const it = q.it;
-      el.innerHTML = promptHTML(it.lv.qp || 'Co naprawdę znaczy to słowo?') + wordCard('', it.en, it.en) + '<div class="options"></div>';
+      el.innerHTML = promptHTML(it.lv.qp || T.meaning) + wordCard('', it.en, it.en) + '<div class="options"></div>';
       autoSay(it.en);
       choice(el, shuffle([it.pl].concat(it.opts)), it.pl, ok => feedback(ok, { answer: it.pl, tip: it.tip }));
     }
@@ -946,34 +989,34 @@
     save();
     const lv = Q.lv;
     const nextLv = lv ? LEVELS[lv.num] : null;
-    const heads = [['💪', 'Spróbuj jeszcze raz'], ['👍', 'Nieźle!'], ['🎉', 'Bardzo dobrze!'], ['🏆', 'Perfekcyjnie!']];
-    const head = Q.review ? ['🔁', 'Powtórka zakończona!'] : heads[stars];
+    const heads = T.heads;
+    const head = Q.review ? ['🔁', T.reviewDone] : heads[stars];
     const missed = Q.missed.filter((x, i, a) => a.indexOf(x) === i);
     const left = mistakeList().length;
 
     let actions = '';
     if (!Q.review) {
-      if (stars > 0 && nextLv) actions += '<button class="btn primary big" data-act="nextlv">Następny poziom → <span class="ellip">' + nextLv.num + '. ' + esc(nextLv.t) + '</span></button>';
-      if (stars === 0) actions += '<button class="btn primary big" data-act="flash">📇 Najpierw fiszki</button>';
-      actions += '<button class="btn soft" data-act="retry">↻ Jeszcze raz</button>';
+      if (stars > 0 && nextLv) actions += '<button class="btn primary big" data-act="nextlv">' + T.nextLevel + '<span class="ellip">' + nextLv.num + '. ' + esc(nextLv.t) + '</span></button>';
+      if (stars === 0) actions += '<button class="btn primary big" data-act="flash">' + T.flashFirst + '</button>';
+      actions += '<button class="btn soft" data-act="retry">' + T.retry + '</button>';
     } else if (left) {
-      actions += '<button class="btn primary big" data-act="review">🔁 Powtarzaj dalej</button>';
+      actions += '<button class="btn primary big" data-act="review">' + T.reviewMore + '</button>';
     }
-    actions += '<button class="btn ghost" data-act="home">Menu</button>';
+    actions += '<button class="btn ghost" data-act="home">' + T.menu + '</button>';
 
     app.innerHTML =
       '<div class="play result-screen">' +
-        '<div class="play-top"><button class="icon-btn" data-act="home" aria-label="Wróć do menu">' + icon('close') + '</button><div class="bar"><i style="width:100%"></i></div></div>' +
+        '<div class="play-top"><button class="icon-btn" data-act="home" aria-label="' + esc(T.backMenu) + '">' + icon('close') + '</button><div class="bar"><i style="width:100%"></i></div></div>' +
         '<div class="result pop">' +
           '<div class="res-emoji">' + head[0] + '</div>' +
           '<h2>' + head[1] + '</h2>' +
           (Q.review ? '' : starsHTML(stars, 'xl')) +
-          '<p class="res-score"><b>' + Q.ok + '</b> z <b>' + Q.total + '</b> dobrze za pierwszym razem (' + Math.round(pct * 100) + '%)</p>' +
-          (improved && stars ? '<p class="res-note">Nowy rekord na tym poziomie! ⭐</p>' : '') +
-          (!Q.review && stars === 0 ? '<p class="muted">Gwiazdkę dostajesz od 50% poprawnych odpowiedzi. Przejrzyj fiszki i spróbuj ponownie – dasz radę!</p>' : '') +
-          (!Q.review && stars > 0 && !nextLv ? '<p class="res-note">To był ostatni poziom. Gratulacje – przeszedłeś cały kurs! 🎓</p>' : '') +
-          (Q.review ? '<p class="muted">' + (left ? 'Pozostało do powtórki: ' + left + '.' : 'Wszystkie błędy poprawione! 🎉') + '</p>' : '') +
-          (missed.length ? '<div class="missed"><h3>Warto powtórzyć</h3><ul>' + missed.map(it => '<li>' + missedLine(it) + '</li>').join('') + '</ul></div>' : '') +
+          '<p class="res-score">' + T.score(Q.ok, Q.total, Math.round(pct * 100)) + '</p>' +
+          (improved && stars ? '<p class="res-note">' + T.record + '</p>' : '') +
+          (!Q.review && stars === 0 ? '<p class="muted">' + T.starRule + '</p>' : '') +
+          (!Q.review && stars > 0 && !nextLv ? '<p class="res-note">' + T.lastLevel + '</p>' : '') +
+          (Q.review ? '<p class="muted">' + (left ? T.left + left + '.' : T.allFixed) + '</p>' : '') +
+          (missed.length ? '<div class="missed"><h3>' + T.worth + '</h3><ul>' + missed.map(it => '<li>' + missedLine(it) + '</li>').join('') + '</ul></div>' : '') +
           '<div class="res-actions">' + actions + '</div>' +
         '</div>' +
       '</div>';
@@ -1010,7 +1053,7 @@
     const k = it.lv.k;
     if (k === 'v') {
       const enSide = { html: lang(L.short) + em + '<div class="f-word">' + esc(enShow(it)) + '</div>' + tl(enShow(it)) + spkBtn(sayText(it)), say: sayText(it) };
-      const plSide = { html: lang('PL') + em + '<div class="f-word">' + esc(it.pl) + '</div>', say: '' };
+      const plSide = { html: lang(T.native) + em + '<div class="f-word">' + esc(it.pl) + '</div>', say: '' };
       const plFirst = !!it.lv.flip !== !!rev;
       if (plFirst) {
         enSide.html += '<div class="f-sub">' + esc(it.pl) + '</div>';
@@ -1021,18 +1064,18 @@
     }
     if (k === 'm') {
       const enSide = { html: lang(L.short) + '<div class="f-word">' + esc(it.en) + '</div>' + tl(it.en) + spkBtn(it.en), say: it.en };
-      const plSide = { html: lang('PL') + '<div class="f-word">' + esc(it.pl) + '</div>' + (it.tip ? '<div class="f-tip">⚠️ ' + esc(it.tip) + '</div>' : ''), say: '' };
+      const plSide = { html: lang(T.native) + '<div class="f-word">' + esc(it.pl) + '</div>' + (it.tip ? '<div class="f-tip">⚠️ ' + esc(it.tip) + '</div>' : ''), say: '' };
       if (rev) { enSide.html += '<div class="f-sub">' + esc(it.pl) + '</div>'; return { front: plSide, back: enSide }; }
       return { front: enSide, back: plSide };
     }
     if (k === 'f') {
       return {
-        front: { html: lang('Uzupełnij') + '<div class="f-sent">' + sentenceHTML(it) + '</div>' + tl(it.s.replace(/\{[^}]+\}/, '___')) + '<div class="f-sub">' + esc(it.pl) + '</div>', say: '' },
+        front: { html: lang(T.fillBadge) + '<div class="f-sent">' + sentenceHTML(it) + '</div>' + tl(it.s.replace(/\{[^}]+\}/, '___')) + '<div class="f-sub">' + esc(it.pl) + '</div>', say: '' },
         back: { html: lang(L.short) + '<div class="f-sent">' + sentenceHTML(it, 'ok') + '</div>' + tl(it.full) + '<div class="f-sub">' + esc(it.pl) + '</div>' + spkBtn(sayText(it)) + (it.tip ? '<div class="f-tip">💡 ' + esc(it.tip) + '</div>' : ''), say: sayText(it) }
       };
     }
     return {
-      front: { html: lang('PL') + '<div class="f-sent">' + esc(it.pl) + '</div><div class="f-sub">Jak to powiesz ' + esc(L.inLang) + '?</div>', say: '' },
+      front: { html: lang(T.native) + '<div class="f-sent">' + esc(it.pl) + '</div><div class="f-sub">' + T.howSayIt + esc(L.inLang) + '?</div>', say: '' },
       back: { html: lang(L.short) + '<div class="f-sent">' + esc(it.en) + '</div>' + tl(it.en) + spkBtn(it.en) + '<div class="f-sub">' + esc(it.pl) + '</div>', say: it.en }
     };
   }
@@ -1046,10 +1089,10 @@
     app.innerHTML =
       '<div class="play flash">' +
         '<div class="play-top">' +
-          '<button class="icon-btn" data-act="close" aria-label="Zamknij fiszki">' + icon('close') + '</button>' +
+          '<button class="icon-btn" data-act="close" aria-label="' + esc(T.closeFlash) + '">' + icon('close') + '</button>' +
           '<div class="bar"><i style="width:' + (F.known / F.total * 100) + '%"></i></div>' +
-          '<span class="counter" title="Umiem">' + F.known + '/' + F.total + '</span>' +
-          (canRev ? '<button class="icon-btn' + (F.rev ? ' on' : '') + '" data-act="rev" aria-label="Zmień kierunek (PL ⇄ EN)" title="Zmień kierunek (PL ⇄ EN)">' + icon('swap') + '</button>' : '') +
+          '<span class="counter" title="' + esc(T.know) + '">' + F.known + '/' + F.total + '</span>' +
+          (canRev ? '<button class="icon-btn' + (F.rev ? ' on' : '') + '" data-act="rev" aria-label="' + esc(T.switchDir + ' (' + T.native + ' ⇄ ' + L.short + ')') + '" title="' + esc(T.switchDir + ' (' + T.native + ' ⇄ ' + L.short + ')') + '">' + icon('swap') + '</button>' : '') +
         '</div>' +
         '<div class="play-title">📇 ' + esc(F.lv.num + '. ' + F.lv.t) + '</div>' +
         '<div class="flash-main">' +
@@ -1059,8 +1102,8 @@
               '<div class="face back">' + fc.back.html + '</div>' +
             '</div>' +
           '</div>' +
-          '<p class="hint"><span class="touch-only">Stuknij kartę, aby ją odwrócić · przesuń w prawo = umiem, w lewo = jeszcze nie</span>' +
-          '<span class="mouse-only">Kliknij kartę lub naciśnij spację · → umiem · ← jeszcze nie</span></p>' +
+          '<p class="hint"><span class="touch-only">' + T.hintTouch + '</span>' +
+          '<span class="mouse-only">' + T.hintMouse + '</span></p>' +
         '</div>' +
         '<div class="flash-actions" id="fact"></div>' +
       '</div>';
@@ -1069,8 +1112,8 @@
     const wrap = $('#fwrap'), card = $('#fcard'), fact = $('#fact');
     const drawActions = () => {
       fact.innerHTML = F.seenBack
-        ? '<button class="btn bad-soft" data-act="again">😕 Jeszcze nie</button><button class="btn ok" data-act="know">😊 Umiem</button>'
-        : '<button class="btn primary wide" data-act="flip">Pokaż odpowiedź</button>';
+        ? '<button class="btn bad-soft" data-act="again">' + T.notYet + '</button><button class="btn ok" data-act="know">' + T.iKnow + '</button>'
+        : '<button class="btn primary wide" data-act="flip">' + T.showAnswer + '</button>';
     };
     const flip = () => {
       F.flipped = !F.flipped;
@@ -1156,16 +1199,16 @@
     const lv = F.lv;
     app.innerHTML =
       '<div class="play result-screen">' +
-        '<div class="play-top"><button class="icon-btn" data-act="home" aria-label="Wróć do menu">' + icon('close') + '</button><div class="bar"><i style="width:100%"></i></div></div>' +
+        '<div class="play-top"><button class="icon-btn" data-act="home" aria-label="' + esc(T.backMenu) + '">' + icon('close') + '</button><div class="bar"><i style="width:100%"></i></div></div>' +
         '<div class="result pop">' +
           '<div class="res-emoji">🎉</div>' +
-          '<h2>Fiszki przerobione!</h2>' +
-          '<p class="res-score">Umiesz już wszystkie ' + F.total + ' ' + plural(F.total, 'fiszkę', 'fiszki', 'fiszek') + ' z poziomu „' + esc(lv.t) + '”.</p>' +
-          '<p class="muted">Teraz sprawdź się w ćwiczeniach i zdobądź gwiazdki.</p>' +
+          '<h2>' + T.flashDone + '</h2>' +
+          '<p class="res-score">' + T.flashKnown(F.total, pluralW(F.total, T.flashW), esc(lv.t)) + '</p>' +
+          '<p class="muted">' + T.flashNext + '</p>' +
           '<div class="res-actions">' +
-            '<button class="btn primary big" data-act="quiz">✏️ Ćwiczenia</button>' +
-            '<button class="btn soft" data-act="again">📇 Jeszcze raz</button>' +
-            '<button class="btn ghost" data-act="home">Menu</button>' +
+            '<button class="btn primary big" data-act="quiz">' + T.quizBtn + '</button>' +
+            '<button class="btn soft" data-act="again">' + T.flashAgain + '</button>' +
+            '<button class="btn ghost" data-act="home">' + T.menu + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';

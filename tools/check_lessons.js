@@ -5,9 +5,11 @@ const dir = path.resolve(process.argv[2]);
 const ctx = { console }; ctx.window = ctx; vm.createContext(ctx);
 const run = f => vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: f });
 if (fs.existsSync(path.join(dir, 'lang.js'))) run(path.join(dir, 'lang.js'));
-run(path.join(dir, 'data.js'));
-const files = fs.readdirSync(path.join(dir, 'data')).filter(f => f.endsWith('.js'));
-[...files.filter(f => !f.startsWith('gen-')).sort(), 'gen-verbs.js', 'gen-more.js'].forEach(f => run(path.join(dir, 'data', f)));
+// kurs-nakładka (np. uk/english) nie ma własnych danych – bierze je z kursu źródłowego o tej samej nazwie
+const src = fs.existsSync(path.join(dir, 'data.js')) ? dir : path.resolve(__dirname, '..', path.basename(dir));
+run(path.join(src, 'data.js'));
+const files = fs.readdirSync(path.join(src, 'data')).filter(f => f.endsWith('.js'));
+[...files.filter(f => !f.startsWith('gen-')).sort(), 'gen-verbs.js', 'gen-more.js'].forEach(f => run(path.join(src, 'data', f)));
 const lf = fs.readdirSync(path.join(dir, 'lessons')).filter(f => f.endsWith('.js')).sort();
 lf.forEach(f => run(path.join(dir, 'lessons', f)));
 const where = {}; ctx.window.STAGES.forEach(s => s.levels.forEach(l => where[l.id] = s.id));
