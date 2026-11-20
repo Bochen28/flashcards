@@ -28,7 +28,7 @@
     exW: ['ćwiczenie', 'ćwiczenia', 'ćwiczeń'], inLevels: n => ' w ' + n + ' poziomach', lessonsW: ['lekcja', 'lekcje', 'lekcji'],
     tipLessons: '<b>📖 Lekcje</b> wyjaśniają zasady krok po kroku. ',
     tip: 'Każdy poziom ma <b>📇 fiszki</b> do nauki i <b>✏️ ćwiczenia</b>, za które zdobywasz gwiazdki. Poziomy idą od najłatwiejszych do coraz trudniejszych.',
-    cont: 'Kontynuuj', start: 'Zacznij', review: '🔁 Powtórka błędów', levelsW: ['poziom', 'poziomy', 'poziomów'],
+    cont: 'Kontynuuj', start: 'Zacznij', review: '🔁 Powtórka', levelsW: ['poziom', 'poziomy', 'poziomów'],
     foot: 'Postępy zapisują się automatycznie w tej przeglądarce.<br>Powodzenia! Good luck! 🍀',
     stage: 'Etap', elemW: ['element', 'elementy', 'elementów'], best: 'Twój najlepszy wynik', noStars: 'Jeszcze bez gwiazdek', lessonColon: 'Lekcja: ',
     flash: 'Fiszki', flashSub: 'poznaj i zapamiętaj', quiz: 'Ćwiczenia', quizSub: 'sprawdź się, zdobądź ★',
@@ -37,7 +37,7 @@
     rate: 'Tempo mowy', slower: 'wolniej', normal: 'normalnie', testVoice: '🔊 Wypróbuj głos',
     noVoiceLang: 'Ta przeglądarka nie ma głosu dla tego języka, więc czytanie na głos jest wyłączone. Spróbuj w przeglądarce Edge, Safari albo na Androidzie.',
     noVoice: 'Ta przeglądarka nie obsługuje czytania na głos.',
-    progressNote: 'Postępy (gwiazdki, błędy do powtórki, seria dni) zapisują się tylko w tej przeglądarce na tym urządzeniu.',
+    progressNote: 'Postępy (gwiazdki, powtórki, seria dni) zapisują się tylko w tej przeglądarce na tym urządzeniu.',
     reset: 'Wyzeruj postępy', resetAsk: 'Na pewno usunąć wszystkie postępy? Tego nie da się cofnąć.',
     endQuiz: 'Zakończ ćwiczenie', againTag: '↻ jeszcze raz', almost: 'Prawie idealnie!', wrong: 'Niestety nie…', correct: 'Poprawnie: ',
     spelling: 'Uważaj na pisownię: ', next: 'Dalej',
@@ -49,7 +49,8 @@
     score: (ok, total) => '<b>' + ok + '</b> z <b>' + total + '</b> dobrze za pierwszym razem',
     record: 'Nowy rekord na tym poziomie! ⭐',
     starRule: 'Gwiazdkę dostajesz od 50% poprawnych odpowiedzi. Przejrzyj fiszki i spróbuj ponownie – dasz radę!',
-    lastLevel: 'To był ostatni poziom. Gratulacje – przeszedłeś cały kurs! 🎓', left: 'Pozostało do powtórki: ', allFixed: 'Wszystkie błędy poprawione! 🎉',
+    lastLevel: 'To był ostatni poziom. Gratulacje – przeszedłeś cały kurs! 🎓', left: 'Pozostało do powtórki: ', allFixed: 'Na dziś wszystko powtórzone! 🎉',
+    reviewToday: 'Powtórka na dziś', reviewFrom: 'z poprzednich dni', reviewGo: 'Powtórz', goOn: 'Albo ucz się dalej: ',
     worth: 'Warto powtórzyć', fillBadge: 'Uzupełnij', howSayIt: 'Jak to powiesz ', closeFlash: 'Zamknij fiszki', know: 'Umiem', switchDir: 'Zmień kierunek',
     hintTouch: 'Stuknij kartę, aby ją odwrócić · przesuń w prawo = umiem, w lewo = jeszcze nie',
     hintMouse: 'Kliknij kartę lub naciśnij spację · → umiem · ← jeszcze nie',
@@ -70,7 +71,8 @@
     subStreak: 'Zrób dziś choć jedną rundę, żeby nie stracić serii 🔥', subGoal: 'Dzisiejszy cel zrobiony – brawo! Możesz ćwiczyć dalej albo odpocząć.',
     nextUp: 'Następny krok', answersToday: 'odpowiedzi dziś', courseProg: 'Postęp kursu', howTitle: 'Jak to działa?', hide: 'Ukryj',
     how: ['<b>Lekcje</b> tłumaczą zasady prostymi słowami.', '<b>Fiszki</b> pomagają poznać i zapamiętać nowe słowa.',
-      '<b>Ćwiczenia</b> sprawdzają, co już umiesz – za dobre wyniki dostajesz gwiazdki ★.', 'Ucz się codziennie po trochu – nawet 5 minut robi różnicę.'],
+      '<b>Ćwiczenia</b> sprawdzają, co już umiesz – za dobre wyniki dostajesz gwiazdki ★.',
+      '<b>Powtórki</b> wracają do słów po 1, 3, 7 dniach i dłużej – w samą porę, zanim je zapomnisz.', 'Ucz się codziennie po trochu – nawet 5 minut robi różnicę.'],
     goal: 'Dzienny cel (odpowiedzi)', goalDone: 'Cel na dziś osiągnięty! 🎉'
   }, window.UI || {});
   const KIND = T.kind;
@@ -90,6 +92,9 @@
   const pluralW = (n, w) => T.plural(n, w[0], w[1], w[2]);
   const pad = n => String(n).padStart(2, '0');
   const dayStr = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  // numer dnia (lokalna data) – do terminów powtórek
+  const dayNum = d => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+  const todayNum = () => dayNum(new Date());
   const isButtonFocused = () => document.activeElement && document.activeElement.tagName === 'BUTTON';
 
   const ICONS = {
@@ -151,6 +156,15 @@
 
   const TOTAL = LEVELS.reduce((a, l) => a + l.items.length, 0);
 
+  /* powtórki w odstępach: każde ćwiczenie dostaje termin następnej powtórki.
+     Zapis: S.srs[skrót klucza] = [pudełko, dzień]. Pudełko 0 = błąd (powtórka od razu),
+     a każda dobra odpowiedź w terminie przesuwa do następnego pudełka: 1, 3, 7, 16, 35, 90 dni. */
+  const SRS_INT = [0, 1, 3, 7, 16, 35, 90];
+  const SRS_SESSION = 20;
+  const BY_HASH = {};
+  const hashOf = it => it.h || (it.h = cyrb53(it.key).toString(36));
+  LEVELS.forEach(lv => lv.items.forEach(it => { BY_HASH[hashOf(it)] = it; }));
+
   /* lekcje: wyjaśnienia zasad, każda stoi na ścieżce przed poziomem `before` i odsyła do poziomów `practice` */
   const LESSONS = [], LESSON_BY = {}, LESSON_BEFORE = {}, LESSON_FOR = {};
   (window.LESSONS || []).forEach(ls => {
@@ -183,7 +197,7 @@
   /* ---------------- saved progress ---------------- */
   function freshState(settings) {
     return {
-      stars: {}, mistakes: {}, read: {}, streak: { last: '', n: 0 }, open: [], today: { d: '', n: 0 }, how: 0,
+      stars: {}, srs: {}, revDay: '', read: {}, streak: { last: '', n: 0 }, open: [], today: { d: '', n: 0 }, how: 0,
       settings: Object.assign({ auto: true, accent: L.voices[0].code, rate: 0.9, translit: true, autoNext: false, goal: 20 }, settings || {})
     };
   }
@@ -193,14 +207,21 @@
     const s = freshState(d && d.settings);
     if (d) {
       s.stars = d.stars || {};
-      s.mistakes = d.mistakes || {};
       s.read = d.read || {};
       s.streak = d.streak || s.streak;
       s.open = Array.isArray(d.open) ? d.open : [];
       if (d.today && d.today.d) s.today = d.today;
       s.how = d.how || 0;
+      // postępy sprzed powtórek: ukończone poziomy wchodzą do powtórek rozłożone na 4 tygodnie, a stare błędy – na dziś
+      s.srs = d.srs && typeof d.srs === 'object' ? d.srs : seedSrs(s.stars);
+      s.revDay = d.revDay || '';
+      const t = todayNum();
+      Object.keys(d.mistakes || {}).forEach(k => { if (ITEMS[k]) s.srs[hashOf(ITEMS[k])] = [0, t]; });
     }
-    Object.keys(s.mistakes).forEach(k => { if (!ITEMS[k]) delete s.mistakes[k]; });
+    Object.keys(s.srs).forEach(h => {
+      const e = s.srs[h];
+      if (!BY_HASH[h] || !Array.isArray(e) || typeof e[0] !== 'number' || typeof e[1] !== 'number') delete s.srs[h];
+    });
     if (!L.voices.some(v => v.code === s.settings.accent)) s.settings.accent = L.voices[0].code;
     return s;
   }
@@ -230,7 +251,38 @@
     S.today.n++;
     if (S.today.n === goal) setTimeout(() => toast(T.goalDone), 500);
   }
-  const mistakeList = () => Object.keys(S.mistakes).map(k => ITEMS[k]).filter(Boolean);
+  function seedSrs(stars) {
+    const out = {}, t = todayNum();
+    let n = 0;
+    LEVELS.forEach(lv => {
+      const st = stars[lv.id] || 0;
+      if (st) lv.items.forEach(it => { out[hashOf(it)] = [st, t + 1 + (n++ % 28)]; });
+    });
+    return out;
+  }
+  // odpowiedź za pierwszym razem: błąd → powtórka dziś, dobrze → nowe ćwiczenie za 1 dzień,
+  // a ćwiczenie w terminie idzie do następnego pudełka (dobrze przed terminem niczego nie zmienia)
+  function srsAnswer(it, ok) {
+    const h = hashOf(it), t = todayNum(), e = S.srs[h];
+    if (!ok) S.srs[h] = [0, t];
+    else if (!e) S.srs[h] = [1, t + 1];
+    else if (e[1] <= t) { const b = Math.min(e[0] + 1, SRS_INT.length - 1); S.srs[h] = [b, t + SRS_INT[b]]; }
+  }
+  // fiszka „umiem” tylko dopisuje nowe słowo do powtórek (sprawdzą je dopiero ćwiczenia)
+  function srsMeet(it) {
+    const h = hashOf(it);
+    if (!S.srs[h]) S.srs[h] = [1, todayNum() + 1];
+  }
+  // na dziś: najpierw najdłużej czekające, potem te z niższych pudełek
+  function dueList() {
+    const t = todayNum();
+    return Object.keys(S.srs).filter(h => S.srs[h][1] <= t && BY_HASH[h])
+      .sort((a, b) => S.srs[a][1] - S.srs[b][1] || S.srs[a][0] - S.srs[b][0])
+      .map(h => BY_HASH[h]);
+  }
+  // czy czeka coś z wcześniejszych dni (nie tylko dzisiejsze błędy)
+  const spacedDue = () => { const t = todayNum(); return Object.keys(S.srs).some(h => S.srs[h][0] > 0 && S.srs[h][1] <= t); };
+  const countLabel = n => n > 99 ? '99+' : String(n);
   function continueLevel() {
     return LEVELS.find(l => levelStars(l) === 0) || LEVELS.find(l => levelStars(l) < 3) || LEVELS[LEVELS.length - 1];
   }
@@ -470,15 +522,22 @@
     const stars = LEVELS.reduce((a, l) => a + levelStars(l), 0);
     const step = nextStep(), next = step.lv;
     const nLessons = LESSONS.length;
-    const mist = mistakeList().length;
+    const due = dueList().length;
+    // raz dziennie powtórka staje się „następnym krokiem” (gdy czeka coś z wcześniejszych dni)
+    const reviewFirst = due > 0 && spacedDue() && S.revDay !== dayStr(new Date());
     const streak = streakNow();
     const pct = Math.round(done / LEVELS.length * 100);
     const today = todayCount(), goal = S.settings.goal || 20;
     const playedToday = S.streak.last === dayStr(new Date()) || today > 0;
     const sub = done === 0 && !today ? T.subNew : today >= goal ? T.subGoal : streak && !playedToday ? T.subStreak : T.subBack;
-    const nx = step.ls
-      ? { si: step.ls.si, badge: icon('book', 24), t: step.ls.t, meta: T.stage + ' ' + (step.ls.si + 1) + ' · ' + T.lesson }
-      : { si: next.stage, badge: next.num, t: next.t, meta: T.stage + ' ' + (next.stage + 1) + ' · ' + KIND[next.k] + ' · ' + next.items.length + ' ' + pluralW(next.items.length, T.elemW) };
+    const nPath = step.ls
+      ? { c: 'var(--s' + (step.ls.si + 1) + ')', badge: icon('book', 24), t: step.ls.t, meta: T.stage + ' ' + (step.ls.si + 1) + ' · ' + T.lesson }
+      : { c: 'var(--s' + (next.stage + 1) + ')', badge: next.num, t: next.t, meta: T.stage + ' ' + (next.stage + 1) + ' · ' + KIND[next.k] + ' · ' + next.items.length + ' ' + pluralW(next.items.length, T.elemW) };
+    const nRev = Math.min(due, SRS_SESSION);
+    const nx = reviewFirst
+      ? { c: 'var(--primary)', badge: icon('repeat', 26), t: T.reviewToday, meta: nRev + ' ' + pluralW(nRev, T.exW) + ' ' + T.reviewFrom }
+      : nPath;
+    const pathName = step.ls ? step.ls.t : next.num + '. ' + next.t;
     const hr = new Date().getHours();
     const hello = hr < 5 ? T.greetNight : hr < 12 ? T.greetMorning : hr < 18 ? T.greetDay : T.greetEvening;
 
@@ -493,13 +552,15 @@
       '<section class="welcome"><h2>' + hello + '</h2><p>' + sub + '</p></section>' +
       '<div class="dash">' +
         '<div class="dash-main">' +
-          '<button class="next-card" data-act="continue" style="--c:var(--s' + (nx.si + 1) + ')">' +
+          '<button class="next-card" data-act="' + (reviewFirst ? 'review' : 'continue') + '" style="--c:' + nx.c + '">' +
             '<span class="next-label">' + T.nextUp + '</span>' +
             '<span class="next-row"><span class="next-badge">' + nx.badge + '</span>' +
               '<span class="next-txt"><b>' + esc(nx.t) + '</b><small>' + esc(nx.meta) + '</small></span></span>' +
-            '<span class="btn primary big next-go">' + icon('play', 18) + (done ? T.cont : T.start) + '</span>' +
+            '<span class="btn primary big next-go">' + icon('play', 18) + (reviewFirst ? T.reviewGo : done ? T.cont : T.start) + '</span>' +
           '</button>' +
-          (mist ? '<button class="row-btn" data-act="review"><span class="row-ico">' + icon('repeat', 20) + '</span><span class="row-txt">' + esc(plain(T.review)) + '</span><span class="pill">' + mist + '</span>' + icon('chev', 18) + '</button>' : '') +
+          (reviewFirst
+            ? '<button class="row-btn go" data-act="continue" style="--c:' + nPath.c + '"><span class="row-ico">' + icon('chev', 20) + '</span><span class="row-txt ellip">' + esc(T.goOn) + '<b>' + esc(pathName) + '</b></span></button>'
+            : due ? '<button class="row-btn" data-act="review"><span class="row-ico">' + icon('repeat', 20) + '</span><span class="row-txt">' + esc(plain(T.review)) + '</span><span class="pill">' + countLabel(due) + '</span>' + icon('chev', 18) + '</button>' : '') +
         '</div>' +
         '<div class="dash-side">' +
           '<div class="stats">' +
@@ -516,7 +577,7 @@
       '</div>' +
       (!S.how && done < 3 ? '<section class="how"><div class="how-head"><h3>' + T.howTitle + '</h3>' +
           '<button class="icon-btn sm" data-act="how-close" aria-label="' + esc(T.hide) + '" title="' + esc(T.hide) + '">' + icon('close', 18) + '</button></div>' +
-          '<ul>' + T.how.map((x, i) => '<li><span class="how-ico">' + icon(['book', 'cards', 'pencil', 'flame'][i], 20) + '</span><span>' + x + '</span></li>').join('') + '</ul></section>' : '') +
+          '<ul>' + T.how.map((x, i) => '<li><span class="how-ico">' + icon(['book', 'cards', 'pencil', 'repeat', 'flame'][i] || 'check', 20) + '</span><span>' + x + '</span></li>').join('') + '</ul></section>' : '') +
       '<div class="search">' + icon('search', 20) +
         '<input id="search" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="' + esc(T.search) + '…" aria-label="' + esc(T.search) + '" value="' + esc(searchQ) + '">' +
         '<kbd class="mouse-only" aria-hidden="true">/</kbd>' +
@@ -816,7 +877,7 @@
     renderQ();
   }
   function startReview(push) {
-    const items = shuffle(mistakeList()).slice(0, 20);
+    const items = shuffle(dueList().slice(0, SRS_SESSION));
     if (!items.length) { goHome(); return; }
     if (push) pushScreen();
     Q = newSession(items, null, true);
@@ -903,11 +964,11 @@
     Q.at = Date.now();
     bumpToday();
     if (!q.tries) {
-      if (ok) { Q.ok++; delete S.mistakes[q.it.key]; }
+      if (ok) Q.ok++;
       else Q.missed.push(q.it);
+      srsAnswer(q.it, ok);
     }
     if (!ok) {
-      S.mistakes[q.it.key] = 1;
       if (q.tries < 2) Q.list.push({ it: q.it, mode: q.mode, tries: q.tries + 1 });
       if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(60); } catch (e) { /* */ } }
     }
@@ -1185,13 +1246,14 @@
     touchStreak();
     let improved = false;
     if (!Q.review && stars > levelStars(Q.lv)) { S.stars[Q.lv.id] = stars; improved = true; }
+    if (Q.review) S.revDay = dayStr(new Date());
     save();
     const lv = Q.lv;
     const nextLv = lv ? LEVELS[lv.num] : null;
     const heads = T.heads;
     const head = Q.review ? ['🔁', T.reviewDone] : heads[stars];
     const missed = Q.missed.filter((x, i, a) => a.indexOf(x) === i);
-    const left = mistakeList().length;
+    const left = dueList().length;
 
     let actions = '';
     if (!Q.review) {
@@ -1347,9 +1409,10 @@
       if (F.busy || !F.seenBack) return;
       F.busy = true;
       const cur = F.deck.shift();
-      bumpToday(); save();
-      if (kind === 'know') F.known++;
+      bumpToday();
+      if (kind === 'know') { F.known++; srsMeet(cur); }
       else F.deck.splice(Math.min(3, F.deck.length), 0, cur);
+      save();
       const dir = kind === 'know' ? 1 : -1;
       wrap.classList.remove('enter');
       wrap.style.transition = 'transform .22s ease-in, opacity .22s ease-in';
