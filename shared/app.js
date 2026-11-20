@@ -977,7 +977,7 @@
     if (it.lv.strict) return 'bad';
     if (alts.some(a => a.length >= 4 && lev(a, v) <= 1)) return 'typo';
     // brak akcentu (á → a) albo brak rodzajnika (el libro → libro): zaliczamy, ale pokazujemy poprawną formę
-    const fold = s => L.foldAccents ? s.normalize('NFD').replace(/[\u0301\u0308]/g, '').normalize('NFC') : s;
+    const fold = s => L.foldAccents ? s.normalize('NFD').replace(/[\u0300\u0301\u0308]/g, '').normalize('NFC') : s; // \u00b4 ` \u00a8 (\u00e1, \u00e0, \u00fc)
     if (L.foldAccents && alts.some(a => fold(a) === fold(v))) return 'typo';
     if (L.softStrip) {
       const bare = it.en.split('/').map(a => normWord(a.toLowerCase().replace(L.softStrip, '')));

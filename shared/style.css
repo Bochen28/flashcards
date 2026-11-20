@@ -811,6 +811,12 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 100%;
 .ls-table table { border-collapse: collapse; width: 100%; font-size: .95rem; }
 .ls-table th, .ls-table td { padding: 8px 12px; text-align: left; border-top: 1px solid var(--border); vertical-align: top; }
 .ls-table th { border-top: 0; background: var(--surface-2); font-weight: 800; }
+@media (max-width: 480px) {
+  /* odmiana z 4–5 kolumnami: ciaśniej, żeby mieściła się na telefonie bez przewijania */
+  .ls-table table { font-size: .86rem; }
+  .ls-table th, .ls-table td { padding: 7px 7px; }
+  .ls-table th:first-child, .ls-table td:first-child { padding-left: 10px; }
+}
 .ls-box { display: flex; gap: 10px; align-items: flex-start; border-radius: 16px; padding: 10px 12px; margin: 12px 0; font-size: .97rem; line-height: 1.5; }
 .ls-box.tip { background: var(--primary-soft); }
 .ls-box.warn { background: color-mix(in srgb, var(--fix) 16%, var(--surface)); }

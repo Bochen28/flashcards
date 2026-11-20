@@ -5,6 +5,7 @@ Flashcards and short exercises for Polish speakers, from first words to C1:
 - `english/`: English, over 10,000 exercises
 - `ukrainian/`: Ukrainian, over 10,000 exercises, with the alphabet, transliteration and an on-screen Cyrillic keyboard
 - `spanish/`: Spanish (Spain, with notes on Latin America), over 10,000 exercises; conjugation drills are generated from verb rules in `data/gen-verbs.js`, and typing has an á é ñ ¿ ¡ key row
+- `italian/`: Italian, over 10,000 exercises; conjugation, noun, adjective, number and clock drills are generated in `data/gen-verbs.js` and `data/gen-more.js`, typing has an à è é ì ò ù key row, and a missing accent or article counts as a typo
 
 For Ukrainian speakers:
 
@@ -47,7 +48,7 @@ Each language has short lessons in `lessons/*.js` that explain the rules in Poli
 ! tip                      !! warning                plain lines = paragraph, **bold**
 ```
 
-Check lessons with `node tools/check_lessons.js english` (or `ukrainian`). Ukrainian example sentences need recordings too: run `tools/make_audio.py` after adding lessons.
+Check lessons with `node tools/check_lessons.js english` (or `ukrainian`, `spanish`, `italian`). Ukrainian example sentences need recordings too: run `tools/make_audio.py` after adding lessons.
 
 ## Other interface languages
 
