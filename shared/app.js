@@ -8,7 +8,7 @@
     name: 'Angielski', short: 'EN', inLang: 'po angielsku', storeKey: 'fiszki-angielski-v1',
     subtitle: 'Krok po kroku, od zera do C1', sample: 'Hello! How are you today?',
     voices: [{ code: 'en-GB', label: 'brytyjski' }, { code: 'en-US', label: 'amerykański' }],
-    strip: /^(to|a|an|the)\s+/, keepFirst: /^I($|')/, requireVoice: false, translit: null, keyboard: null
+    home: '../', strip: /^(to|a|an|the)\s+/, keepFirst: /^I($|')/, requireVoice: false, translit: null, keyboard: null
   }, window.LANG || {});
   const STORE_KEY = L.storeKey;
 
@@ -46,7 +46,7 @@
     fill: 'Uzupełnij zdanie', order: 'Ułóż zdanie ', yourSentence: 'Twoje zdanie', tapWords: 'Stukaj w słowa poniżej…', meaning: 'Co naprawdę znaczy to słowo?',
     heads: [['💪', 'Spróbuj jeszcze raz'], ['👍', 'Nieźle!'], ['🎉', 'Bardzo dobrze!'], ['🏆', 'Perfekcyjnie!']], reviewDone: 'Powtórka zakończona!',
     nextLevel: 'Następny poziom → ', flashFirst: '📇 Najpierw fiszki', retry: '↻ Jeszcze raz', reviewMore: '🔁 Powtarzaj dalej', menu: 'Menu', backMenu: 'Wróć do menu',
-    score: (ok, total, pct) => '<b>' + ok + '</b> z <b>' + total + '</b> dobrze za pierwszym razem (' + pct + '%)',
+    score: (ok, total) => '<b>' + ok + '</b> z <b>' + total + '</b> dobrze za pierwszym razem',
     record: 'Nowy rekord na tym poziomie! ⭐',
     starRule: 'Gwiazdkę dostajesz od 50% poprawnych odpowiedzi. Przejrzyj fiszki i spróbuj ponownie – dasz radę!',
     lastLevel: 'To był ostatni poziom. Gratulacje – przeszedłeś cały kurs! 🎓', left: 'Pozostało do powtórki: ', allFixed: 'Wszystkie błędy poprawione! 🎉',
@@ -55,7 +55,23 @@
     hintMouse: 'Kliknij kartę lub naciśnij spację · → umiem · ← jeszcze nie',
     notYet: '😕 Jeszcze nie', iKnow: '😊 Umiem', showAnswer: 'Pokaż odpowiedź', flashDone: 'Fiszki przerobione!',
     flashKnown: (n, w, title) => 'Umiesz już wszystkie ' + n + ' ' + w + ' z poziomu „' + title + '”.', flashW: ['fiszkę', 'fiszki', 'fiszek'],
-    flashNext: 'Teraz sprawdź się w ćwiczeniach i zdobądź gwiazdki.', quizBtn: '✏️ Ćwiczenia', flashAgain: '📇 Jeszcze raz'
+    flashNext: 'Teraz sprawdź się w ćwiczeniach i zdobądź gwiazdki.', quizBtn: '✏️ Ćwiczenia', flashAgain: '📇 Jeszcze raz',
+    starsAria: n => n + ' z 3 gwiazdek', gap: 'luka', allCourses: 'Wszystkie języki',
+    search: 'Szukaj poziomu, lekcji albo słowa', searchNone: 'Nic nie znaleziono. Spróbuj innego słowa.',
+    searchFound: (n, more) => 'Znaleziono: ' + n + (more ? ' (pokazuję pierwsze ' + more + ')' : ''),
+    leaveTitle: 'Zakończyć ćwiczenie?', leaveText: 'Wynik tej rundy nie zostanie zapisany.', keepGoing: 'Ćwicz dalej', leave: 'Zakończ',
+    autoNext: 'Po dobrej odpowiedzi przechodź dalej sam', theme: 'Motyw', themeAuto: 'jak system', themeLight: 'jasny', themeDark: 'ciemny',
+    textSize: 'Wielkość tekstu', sizeNormal: 'zwykła', sizeLarge: 'duża', backup: 'Kopia postępów',
+    backupNote: 'Zapisz postępy do pliku, żeby mieć kopię albo przenieść je do innej przeglądarki czy na inne urządzenie.',
+    exportBtn: '⬇ Zapisz do pliku', importBtn: '⬆ Wczytaj z pliku', importOk: 'Postępy wczytane ✓',
+    importBad: 'To nie jest plik z postępami tego kursu.', importAsk: 'Wczytać postępy z pliku? Obecne postępy w tym kursie zostaną zastąpione.',
+    greetMorning: 'Dzień dobry!', greetDay: 'Cześć!', greetEvening: 'Dobry wieczór!', greetNight: 'Jeszcze nie śpisz? 🌙',
+    subNew: 'Zacznij od krótkiej lekcji – to zajmie tylko kilka minut.', subBack: 'Miło cię znowu widzieć. Ruszamy dalej?',
+    subStreak: 'Zrób dziś choć jedną rundę, żeby nie stracić serii 🔥', subGoal: 'Dzisiejszy cel zrobiony – brawo! Możesz ćwiczyć dalej albo odpocząć.',
+    nextUp: 'Następny krok', answersToday: 'odpowiedzi dziś', courseProg: 'Postęp kursu', howTitle: 'Jak to działa?', hide: 'Ukryj',
+    how: ['<b>Lekcje</b> tłumaczą zasady prostymi słowami.', '<b>Fiszki</b> pomagają poznać i zapamiętać nowe słowa.',
+      '<b>Ćwiczenia</b> sprawdzają, co już umiesz – za dobre wyniki dostajesz gwiazdki ★.', 'Ucz się codziennie po trochu – nawet 5 minut robi różnicę.'],
+    goal: 'Dzienny cel (odpowiedzi)', goalDone: 'Cel na dziś osiągnięty! 🎉'
   }, window.UI || {});
   const KIND = T.kind;
   const PRAISE = T.praise;
@@ -80,8 +96,21 @@
     close: '<path d="M6 6l12 12M18 6L6 18"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     speaker: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    play: '<path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor" stroke="none"/>',
+    book: '<path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7z"/>',
+    cards: '<rect x="3" y="7" width="13" height="14" rx="2.5"/><path d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16"/>',
+    pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    repeat: '<path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/>',
+    flame: '<path d="M12 22c3.9 0 7-2.7 7-6.8 0-3.6-2.4-6-3.8-9.7-.2-.5-.8-.6-1.1-.2C12.6 7.4 12 9 12 10.6c-.9-.7-1.6-1.8-1.9-3.1-.1-.5-.7-.7-1-.3C7.4 9.4 5 12 5 15.2 5 19.3 8.1 22 12 22z"/>',
+    star: '<path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/>',
+    check: '<path d="M20 6L9 17l-5-5"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>',
     swap: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'
   };
+  // tekst bez emoji na początku (gdy obok stoi ikona)
+  const plain = t => String(t).replace(/^[^\p{L}\p{N}(]+/u, '');
   const icon = (n, s) => '<svg class="ic" viewBox="0 0 24 24" width="' + (s || 22) + '" height="' + (s || 22) + '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
   /* ---------------- data ---------------- */
@@ -142,7 +171,7 @@
     const parts = it.s.split(/\{[^}]+\}/);
     const blank = state
       ? '<span class="blank filled ' + state + '">' + esc(it.ans) + '</span>'
-      : '<span class="blank" aria-label="luka"> </span>';
+      : '<span class="blank" aria-label="' + esc(T.gap) + '"> </span>';
     return esc(parts[0]) + blank + esc(parts[1] || '');
   }
   function previewText(it) {
@@ -154,8 +183,8 @@
   /* ---------------- saved progress ---------------- */
   function freshState(settings) {
     return {
-      stars: {}, mistakes: {}, read: {}, streak: { last: '', n: 0 },
-      settings: Object.assign({ auto: true, accent: L.voices[0].code, rate: 0.9, translit: true }, settings || {})
+      stars: {}, mistakes: {}, read: {}, streak: { last: '', n: 0 }, open: [], today: { d: '', n: 0 }, how: 0,
+      settings: Object.assign({ auto: true, accent: L.voices[0].code, rate: 0.9, translit: true, autoNext: false, goal: 20 }, settings || {})
     };
   }
   function load() {
@@ -167,6 +196,9 @@
       s.mistakes = d.mistakes || {};
       s.read = d.read || {};
       s.streak = d.streak || s.streak;
+      s.open = Array.isArray(d.open) ? d.open : [];
+      if (d.today && d.today.d) s.today = d.today;
+      s.how = d.how || 0;
     }
     Object.keys(s.mistakes).forEach(k => { if (!ITEMS[k]) delete s.mistakes[k]; });
     if (!L.voices.some(v => v.code === s.settings.accent)) s.settings.accent = L.voices[0].code;
@@ -174,6 +206,8 @@
   }
   let S = load();
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* tryb prywatny itp. */ } }
+  // strona wyboru języka zaznacza ostatnio używany kurs
+  try { localStorage.setItem('fiszki-last', STORE_KEY); } catch (e) { /* */ }
 
   function touchStreak() {
     const today = dayStr(new Date());
@@ -188,12 +222,20 @@
     return (S.streak.last === dayStr(new Date()) || S.streak.last === dayStr(y)) ? (S.streak.n || 0) : 0;
   }
   const levelStars = lv => S.stars[lv.id] || 0;
+  const todayCount = () => S.today && S.today.d === dayStr(new Date()) ? S.today.n : 0;
+  // każda odpowiedź (ćwiczenie albo fiszka) liczy się do dziennego celu
+  function bumpToday() {
+    const d = dayStr(new Date()), goal = S.settings.goal || 20;
+    if (!S.today || S.today.d !== d) S.today = { d: d, n: 0 };
+    S.today.n++;
+    if (S.today.n === goal) setTimeout(() => toast(T.goalDone), 500);
+  }
   const mistakeList = () => Object.keys(S.mistakes).map(k => ITEMS[k]).filter(Boolean);
   function continueLevel() {
     return LEVELS.find(l => levelStars(l) === 0) || LEVELS.find(l => levelStars(l) < 3) || LEVELS[LEVELS.length - 1];
   }
   function starsHTML(n, cls) {
-    let h = '<span class="stars ' + (cls || '') + '" aria-label="' + n + ' z 3 gwiazdek">';
+    let h = '<span class="stars ' + (cls || '') + '" aria-label="' + esc(T.starsAria(n)) + '">';
     for (let i = 0; i < 3; i++) h += '<span class="' + (i < n ? 'on' : '') + '">★</span>';
     return h + '</span>';
   }
@@ -312,9 +354,12 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (sheetEl) { closeSheet(); return; }
-      if (!onHome) { goHome(); return; }
+      if (!onHome) { if (Q) leaveQuiz(); else goHome(); return; }
     }
     if (sheetEl || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (onHome && e.key === '/' && !/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName)) {
+      const si = $('#search'); if (si) { e.preventDefault(); si.focus(); } return;
+    }
     if (keyHandler) keyHandler(e);
   });
 
@@ -344,23 +389,71 @@
     setTimeout(() => el.remove(), 220);
   }
 
+  function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+  }
+
+  /* ---------------- search ---------------- */
+  let searchQ = '', SEARCH = null;
+  // bez wielkości liter i znaków diakrytycznych (ą → a, й → и), żeby łatwo trafić
+  const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/[’'ʼ`]/g, '');
+  const hitText = it => it.lv.k === 'v' ? previewText(it) : previewText(it) + ' – ' + it.pl;
+  function searchIndex() {
+    if (SEARCH) return SEARCH;
+    SEARCH = [];
+    LEVELS.forEach(l => SEARCH.push({ lv: l, head: fold(l.t + ' ' + l.d), items: l.items.map(it => ({ it: it, t: fold(hitText(it)) })) }));
+    LESSONS.forEach(ls => SEARCH.push({ ls: ls, head: fold(ls.t + ' ' + ls.d), body: fold(ls.body) }));
+    return SEARCH;
+  }
+  function runSearch() {
+    const box = $('#search-res'), home = $('.home');
+    if (!box || !home) return;
+    const q = fold(searchQ).trim();
+    home.classList.toggle('searching', !!q);
+    if (!q) { box.innerHTML = ''; return; }
+    const words = q.split(/\s+/), has = t => words.every(w => t.indexOf(w) >= 0);
+    const num = /^\d+$/.test(q) ? +q : 0;
+    const res = [];
+    searchIndex().forEach(e => {
+      if (e.lv) {
+        if (num && e.lv.num === num) res.push({ e: e, score: -1 });
+        else if (has(e.head)) res.push({ e: e, score: 0 });
+        else { const m = e.items.find(x => has(x.t)); if (m) res.push({ e: e, score: 1, hit: hitText(m.it) }); }
+      } else if (has(e.head)) res.push({ e: e, score: 0 });
+      else if (has(e.body)) res.push({ e: e, score: 2 });
+    });
+    res.sort((a, b) => a.score - b.score);
+    const MAX = 60, shown = res.slice(0, MAX);
+    box.innerHTML = '<p class="search-count">' + (res.length ? T.searchFound(res.length, res.length > MAX ? MAX : 0) : T.searchNone) + '</p>' +
+      (shown.length ? '<div class="grid">' + shown.map(r => r.e.lv ? tileHTML(r.e.lv, false, r.hit) : lessonTileHTML(r.e.ls, false)).join('') + '</div>' : '');
+  }
+
   /* ---------------- home ---------------- */
-  function tileHTML(l, isNext) {
+  function ring(frac, inner) {
+    const r = 20, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac || 0));
+    return '<span class="ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="' + r + '" class="ring-bg"/>' +
+      (f ? '<circle cx="24" cy="24" r="' + r + '" class="ring-fg" stroke-dasharray="' + (c * f).toFixed(1) + ' ' + c.toFixed(1) + '"/>' : '') +
+      '</svg><span class="ring-in">' + (inner || '') + '</span></span>';
+  }
+  function tileHTML(l, isNext, hit) {
     const st = levelStars(l);
-    return '<button class="lvl' + (st ? ' done' : '') + (isNext ? ' next' : '') + '" data-lv="' + l.id + '">' +
-      (isNext ? '<span class="now">' + T.now + '</span>' : '') +
+    return '<button class="lvl' + (st ? ' done' : '') + (isNext ? ' next' : '') + '" data-lv="' + l.id + '" style="--c:var(--s' + (l.stage + 1) + ')">' +
       '<span class="lvl-num">' + l.num + '</span>' +
-      '<span class="lvl-t">' + esc(l.t) + '</span>' +
-      '<span class="lvl-meta"><span class="lvl-k">' + KIND[l.k] + '</span>' + starsHTML(st) + '</span>' +
+      '<span class="lvl-main"><span class="lvl-t">' + esc(l.t) + '</span>' +
+        (hit ? '<span class="lvl-hit">' + esc(hit) + '</span>' : '<span class="lvl-k">' + KIND[l.k] + '</span>') + '</span>' +
+      (isNext ? '<span class="now">' + T.now + '</span>' : starsHTML(st)) +
       '</button>';
   }
   function lessonTileHTML(ls, isNext) {
     const rd = !!S.read[ls.id];
-    return '<button class="lvl lesson' + (rd ? ' done' : '') + (isNext ? ' next' : '') + '" data-lesson="' + esc(ls.id) + '">' +
-      (isNext ? '<span class="now">' + T.now + '</span>' : '') +
-      '<span class="lvl-num" aria-hidden="true">📖</span>' +
-      '<span class="lvl-t">' + esc(ls.t) + '</span>' +
-      '<span class="lvl-meta"><span class="lvl-k">' + T.lesson + '</span>' + (rd ? '<span class="read-mark">' + T.read + '</span>' : '') + '</span>' +
+    return '<button class="lvl lesson' + (rd ? ' done' : '') + (isNext ? ' next' : '') + '" data-lesson="' + esc(ls.id) + '" style="--c:var(--s' + (ls.si + 1) + ')">' +
+      '<span class="lvl-num" aria-hidden="true">' + icon('book', 18) + '</span>' +
+      '<span class="lvl-main"><span class="lvl-t">' + esc(ls.t) + '</span><span class="lvl-k">' + T.lesson + '</span></span>' +
+      (isNext ? '<span class="now">' + T.now + '</span>' : rd ? '<span class="read-ok" title="' + esc(plain(T.read)) + '">' + icon('check', 16) + '</span>' : '') +
       '</button>';
   }
   // co pokazać jako „następne”: nieprzeczytana lekcja tuż przed następnym poziomem albo sam poziom
@@ -380,30 +473,62 @@
     const mist = mistakeList().length;
     const streak = streakNow();
     const pct = Math.round(done / LEVELS.length * 100);
+    const today = todayCount(), goal = S.settings.goal || 20;
+    const playedToday = S.streak.last === dayStr(new Date()) || today > 0;
+    const sub = done === 0 && !today ? T.subNew : today >= goal ? T.subGoal : streak && !playedToday ? T.subStreak : T.subBack;
+    const nx = step.ls
+      ? { si: step.ls.si, badge: icon('book', 24), t: step.ls.t, meta: T.stage + ' ' + (step.ls.si + 1) + ' · ' + T.lesson }
+      : { si: next.stage, badge: next.num, t: next.t, meta: T.stage + ' ' + (next.stage + 1) + ' · ' + KIND[next.k] + ' · ' + next.items.length + ' ' + pluralW(next.items.length, T.elemW) };
+    const hr = new Date().getHours();
+    const hello = hr < 5 ? T.greetNight : hr < 12 ? T.greetMorning : hr < 18 ? T.greetDay : T.greetEvening;
 
     let h = '<div class="wrap home">' +
       '<header class="topbar">' +
-        '<div class="brand"><span class="logo" aria-hidden="true">' + esc(L.short) + '</span><div><h1>' + esc(L.name) + ' · ' + T.cards + '</h1><p>' + esc(L.subtitle) + '</p></div></div>' +
-        '<button class="icon-btn" data-act="settings" aria-label="' + esc(T.settings) + '">' + icon('gear') + '</button>' +
+        '<div class="brand"><span class="logo" aria-hidden="true">' + esc(L.short) + '</span><div class="brand-txt"><h1>' + esc(L.name) + ' <span>· ' + T.cards + '</span></h1><p>' + esc(L.subtitle) + '</p></div></div>' +
+        '<div class="top-btns">' +
+          '<a class="icon-btn" href="' + esc(L.home) + '" aria-label="' + esc(T.allCourses) + '" title="' + esc(T.allCourses) + '">' + icon('globe') + '</a>' +
+          '<button class="icon-btn" data-act="settings" aria-label="' + esc(T.settings) + '" title="' + esc(T.settings) + '">' + icon('gear') + '</button>' +
+        '</div>' +
       '</header>' +
-      '<section class="hero">' +
-        '<div class="stats">' +
-          '<div><b>' + done + '<small>/' + LEVELS.length + '</small></b><span>' + T.levelsDone + '</span></div>' +
-          '<div><b>' + stars + '<small>★</small></b><span>' + pluralW(stars, T.starsW) + '</span></div>' +
-          '<div><b>' + streak + '<small>🔥</small></b><span>' + (T.daysW ? pluralW(streak, T.daysW) : (streak === 1 ? T.day : T.days)) + T.inARow + '</span></div>' +
+      '<section class="welcome"><h2>' + hello + '</h2><p>' + sub + '</p></section>' +
+      '<div class="dash">' +
+        '<div class="dash-main">' +
+          '<button class="next-card" data-act="continue" style="--c:var(--s' + (nx.si + 1) + ')">' +
+            '<span class="next-label">' + T.nextUp + '</span>' +
+            '<span class="next-row"><span class="next-badge">' + nx.badge + '</span>' +
+              '<span class="next-txt"><b>' + esc(nx.t) + '</b><small>' + esc(nx.meta) + '</small></span></span>' +
+            '<span class="btn primary big next-go">' + icon('play', 18) + (done ? T.cont : T.start) + '</span>' +
+          '</button>' +
+          (mist ? '<button class="row-btn" data-act="review"><span class="row-ico">' + icon('repeat', 20) + '</span><span class="row-txt">' + esc(plain(T.review)) + '</span><span class="pill">' + mist + '</span>' + icon('chev', 18) + '</button>' : '') +
         '</div>' +
-        '<div class="bar light" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
-        '<p class="hero-count">📚 ' + fmt(TOTAL) + ' ' + pluralW(TOTAL, T.exW) + T.inLevels(LEVELS.length) +
-          (nLessons ? ' · 📖 ' + nLessons + ' ' + pluralW(nLessons, T.lessonsW) : '') + '</p>' +
-        (done === 0 ? '<p class="hero-tip">' + (nLessons ? T.tipLessons : '') + T.tip + '</p>' : '') +
-        '<div class="hero-actions">' +
-          '<button class="btn white big" data-act="continue">▶ ' + (done ? T.cont : T.start) + ': <span class="ellip">' +
-            (step.ls ? '📖 ' + esc(step.ls.t) : next.num + '. ' + esc(next.t)) + '</span></button>' +
-          (mist ? '<button class="btn glass" data-act="review">' + T.review + ' <span class="pill">' + mist + '</span></button>' : '') +
+        '<div class="dash-side">' +
+          '<div class="stats">' +
+            '<div class="stat goal' + (today >= goal ? ' reached' : '') + '">' + ring(today / goal, today >= goal ? icon('check', 18) : '') +
+              '<b>' + today + '<small>/' + goal + '</small></b><span>' + T.answersToday + '</span></div>' +
+            '<div class="stat streak' + (streak ? ' on' : '') + '"><span class="stat-ico">' + icon('flame', 22) + '</span>' +
+              '<b>' + streak + '</b><span>' + (T.daysW ? pluralW(streak, T.daysW) : (streak === 1 ? T.day : T.days)) + T.inARow + '</span></div>' +
+            '<div class="stat stars-stat"><span class="stat-ico">' + icon('star', 22) + '</span>' +
+              '<b>' + stars + '</b><span>' + pluralW(stars, T.starsW) + '</span></div>' +
+          '</div>' +
+          '<div class="course-prog"><div class="cp-top"><span>' + T.courseProg + '</span><b>' + done + '/' + LEVELS.length + '</b></div>' +
+            '<div class="bar" role="progressbar" aria-label="' + esc(T.courseProg) + '" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + Math.max(pct, done ? 2 : 0) + '%"></i></div></div>' +
         '</div>' +
-      '</section>';
+      '</div>' +
+      (!S.how && done < 3 ? '<section class="how"><div class="how-head"><h3>' + T.howTitle + '</h3>' +
+          '<button class="icon-btn sm" data-act="how-close" aria-label="' + esc(T.hide) + '" title="' + esc(T.hide) + '">' + icon('close', 18) + '</button></div>' +
+          '<ul>' + T.how.map((x, i) => '<li><span class="how-ico">' + icon(['book', 'cards', 'pencil', 'flame'][i], 20) + '</span><span>' + x + '</span></li>').join('') + '</ul></section>' : '') +
+      '<div class="search">' + icon('search', 20) +
+        '<input id="search" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="' + esc(T.search) + '…" aria-label="' + esc(T.search) + '" value="' + esc(searchQ) + '">' +
+        '<kbd class="mouse-only" aria-hidden="true">/</kbd>' +
+      '</div>' +
+      '<div class="search-res" id="search-res" aria-live="polite"></div>' +
+      '<div class="stages">';
 
-    if (!openStages) openStages = new Set([next.stage]);
+    if (!openStages) {
+      // etapy rozwinięte przy ostatniej wizycie + etap z następnym poziomem
+      openStages = new Set((S.open || []).map(id => STAGES.findIndex(s => s.id === id)).filter(i => i >= 0));
+      openStages.add(next.stage);
+    }
     STAGES.forEach((st, si) => {
       if (!st.levels.length) return;
       const d = st.levels.filter(l => levelStars(l) > 0).length;
@@ -422,14 +547,22 @@
             '<span class="stage-bar"><i style="width:' + Math.round(d / st.levels.length * 100) + '%"></i></span>' +
           '</span>' +
           '<span class="stage-count">' + d + '/' + st.levels.length + '</span>' +
-          '<span class="chev" aria-hidden="true">›</span>' +
+          '<span class="chev" aria-hidden="true">' + icon('chev', 20) + '</span>' +
         '</button>' +
         (open ? '<div class="grid">' + tiles() + '</div>' : '') +
         '</section>';
     });
-    h += '<footer class="foot">' + T.foot + '</footer></div>';
+    h += '</div><footer class="foot"><p class="foot-count">' + fmt(TOTAL) + ' ' + pluralW(TOTAL, T.exW) + T.inLevels(LEVELS.length) +
+      (nLessons ? ' · ' + nLessons + ' ' + pluralW(nLessons, T.lessonsW) : '') + '</p><p>' + T.foot + '</p></footer></div>';
 
     app.innerHTML = h;
+    const sIn = $('#search', app);
+    sIn.addEventListener('input', () => { searchQ = sIn.value; runSearch(); });
+    sIn.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && sIn.value) { e.stopPropagation(); sIn.value = ''; searchQ = ''; runSearch(); }
+      else if (e.key === 'Enter') { e.preventDefault(); sIn.blur(); }
+    });
+    runSearch();
     window.scrollTo(0, homeScroll);
 
     $('.home', app).addEventListener('click', e => {
@@ -441,6 +574,7 @@
       if (sh) {
         const si = +sh.getAttribute('data-stage');
         if (openStages.has(si)) openStages.delete(si); else openStages.add(si);
+        S.open = Array.from(openStages).map(i => STAGES[i].id); save();
         homeScroll = window.scrollY;
         renderHome();
         return;
@@ -451,6 +585,7 @@
       if (act === 'continue') { if (step.ls) openLesson(step.ls, true); else openLevel(next); }
       else if (act === 'review') startReview(true);
       else if (act === 'settings') openSettings();
+      else if (act === 'how-close') { S.how = 1; save(); const c = $('.how', app); if (c) c.remove(); }
     });
   }
 
@@ -467,11 +602,11 @@
       '<p class="sheet-desc">' + esc(lv.d) + '</p>' +
       '<div class="chips">' + chips + '</div>' +
       '<div class="sheet-stars">' + starsHTML(st, 'lg') + '<span>' + (st ? T.best : T.noStars) + '</span></div>' +
-      (LESSON_FOR[lv.id] ? '<button class="btn ghost wide lesson-link" data-act="lesson"><span>📖</span><span class="ellip">' + T.lessonColon + esc(LESSON_FOR[lv.id].t) + '</span>' +
-        (S.read[LESSON_FOR[lv.id].id] ? '<span class="read-mark">✓</span>' : '') + '</button>' : '') +
+      (LESSON_FOR[lv.id] ? '<button class="btn ghost wide lesson-link" data-act="lesson">' + icon('book', 18) + '<span class="ellip">' + T.lessonColon + esc(LESSON_FOR[lv.id].t) + '</span>' +
+        (S.read[LESSON_FOR[lv.id].id] ? '<span class="read-mark">' + icon('check', 16) + '</span>' : '') + '</button>' : '') +
       '<div class="sheet-actions">' +
-        '<button class="btn soft big" data-act="flash"><span class="b-ico">📇</span><span class="b-txt">' + T.flash + '<small>' + T.flashSub + '</small></span></button>' +
-        '<button class="btn primary big" data-act="quiz"><span class="b-ico">✏️</span><span class="b-txt">' + T.quiz + '<small>' + T.quizSub + '</small></span></button>' +
+        '<button class="btn soft big" data-act="flash"><span class="b-ico">' + icon('cards', 24) + '</span><span class="b-txt">' + T.flash + '<small>' + T.flashSub + '</small></span></button>' +
+        '<button class="btn primary big" data-act="quiz"><span class="b-ico">' + icon('pencil', 24) + '</span><span class="b-txt">' + T.quiz + '<small>' + T.quizSub + '</small></span></button>' +
       '</div>',
       act => {
         const push = onHome;
@@ -567,26 +702,43 @@
   function openSettings() {
     const s = S.settings;
     const seg = (name, val, label) => '<button class="seg-btn' + (s[name] === val ? ' on' : '') + '" data-act="set" data-k="' + name + '" data-v="' + val + '">' + label + '</button>';
+    const pseg = (name, val, label) => '<button class="seg-btn' + (getPref(name) === val ? ' on' : '') + '" data-act="pref" data-k="' + name + '" data-v="' + val + '">' + label + '</button>';
     const el = openSheet(
       '<h2 class="sheet-title">' + T.settings + '</h2>' +
       '<label class="set-row"><span>' + T.autoSpeak + '</span><input type="checkbox" class="switch" id="set-auto"' + (s.auto ? ' checked' : '') + '></label>' +
       (L.translit ? '<label class="set-row"><span>' + T.translit + '</span><input type="checkbox" class="switch" id="set-tl"' + (s.translit ? ' checked' : '') + '></label>' : '') +
       (L.voices.length > 1 ? '<div class="set-row"><span>' + T.accent + '</span><div class="seg">' + L.voices.map(v => seg('accent', v.code, v.label)).join('') + '</div></div>' : '') +
       '<div class="set-row"><span>' + T.rate + '</span><div class="seg">' + seg('rate', 0.75, T.slower) + seg('rate', 0.9, T.normal) + '</div></div>' +
+      '<div class="set-row"><span>' + T.goal + '</span><div class="seg">' + seg('goal', 10, '10') + seg('goal', 20, '20') + seg('goal', 40, '40') + '</div></div>' +
+      '<label class="set-row"><span>' + T.autoNext + '</span><input type="checkbox" class="switch" id="set-next"' + (s.autoNext ? ' checked' : '') + '></label>' +
+      '<div class="set-row"><span>' + T.theme + '</span><div class="seg">' + pseg('theme', 'auto', T.themeAuto) + pseg('theme', 'light', T.themeLight) + pseg('theme', 'dark', T.themeDark) + '</div></div>' +
+      '<div class="set-row"><span>' + T.textSize + '</span><div class="seg">' + pseg('size', 'normal', T.sizeNormal) + pseg('size', 'large', T.sizeLarge) + '</div></div>' +
       (canSpeak() ? '<button class="btn soft wide" data-act="test">' + T.testVoice + '</button>' +
           (AUDIO && L.audioCredit ? '<p class="muted small">' + esc(L.audioCredit) + '</p>' : '')
         : '<p class="note">' + (TTS && L.requireVoice ? T.noVoiceLang : T.noVoice) + '</p>') +
       '<hr>' +
-      '<p class="muted small">' + T.progressNote + '</p>' +
+      '<h3 class="set-h">' + T.backup + '</h3>' +
+      '<p class="muted small">' + T.progressNote + ' ' + T.backupNote + '</p>' +
+      '<div class="set-btns"><button class="btn soft" data-act="export">' + T.exportBtn + '</button><button class="btn soft" data-act="import">' + T.importBtn + '</button></div>' +
+      '<input type="file" id="set-file" accept=".json,application/json" hidden>' +
       '<button class="btn danger wide" data-act="reset">' + T.reset + '</button>',
       (act, b) => {
         if (act === 'set') {
           const k = b.getAttribute('data-k');
           let v = b.getAttribute('data-v');
           if (k === 'rate') v = parseFloat(v);
+          if (k === 'goal') v = parseInt(v, 10);
           S.settings[k] = v; save();
           $$('.seg-btn[data-k="' + k + '"]', sheetEl).forEach(x => x.classList.toggle('on', x === b));
-          speak(L.sample);
+          if (k === 'accent' || k === 'rate') speak(L.sample);
+        } else if (act === 'pref') {
+          const k = b.getAttribute('data-k');
+          setPref(k, b.getAttribute('data-v'));
+          $$('.seg-btn[data-k="' + k + '"]', sheetEl).forEach(x => x.classList.toggle('on', x === b));
+        } else if (act === 'export') {
+          exportProgress();
+        } else if (act === 'import') {
+          $('#set-file', sheetEl).click();
         } else if (act === 'test') {
           speak(L.sample);
         } else if (act === 'reset') {
@@ -598,8 +750,48 @@
       }
     );
     $('#set-auto', el).addEventListener('change', e => { S.settings.auto = e.target.checked; save(); });
+    $('#set-next', el).addEventListener('change', e => { S.settings.autoNext = e.target.checked; save(); });
+    $('#set-file', el).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) importProgress(f); e.target.value = ''; });
     const tlBox = $('#set-tl', el);
     if (tlBox) tlBox.addEventListener('change', e => { S.settings.translit = e.target.checked; save(); });
+  }
+
+  // motyw i wielkość tekstu są wspólne dla całej strony (shared/prefs.js ustawia je przed rysowaniem)
+  const PREF_DEF = { theme: 'auto', size: 'normal' };
+  function getPref(k) { try { return localStorage.getItem('fiszki-' + k) || PREF_DEF[k]; } catch (e) { return PREF_DEF[k]; } }
+  function setPref(k, v) {
+    try { if (v === PREF_DEF[k]) localStorage.removeItem('fiszki-' + k); else localStorage.setItem('fiszki-' + k, v); } catch (e) { /* */ }
+    if (v === PREF_DEF[k]) document.documentElement.removeAttribute('data-' + k);
+    else document.documentElement.setAttribute('data-' + k, v);
+  }
+  function exportProgress() {
+    const data = JSON.stringify({ app: 'fiszki', key: STORE_KEY, course: L.name, saved: new Date().toISOString(), data: S });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    a.download = STORE_KEY + '-' + dayStr(new Date()) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function importProgress(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      let d = null;
+      try { d = JSON.parse(r.result); } catch (e) { d = null; }
+      if (!d || d.key !== STORE_KEY || !d.data || typeof d.data.stars !== 'object') { toast(T.importBad); return; }
+      if (!window.confirm(T.importAsk)) return;
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(d.data)); } catch (e) { /* */ }
+      S = load(); save(); openStages = null; homeScroll = 0;
+      closeSheet(); renderHome(); toast(T.importOk);
+    };
+    r.readAsText(file);
+  }
+  // wyjście z ćwiczeń w trakcie rundy: najpierw pytamy, żeby nie stracić wyniku przez przypadek
+  function leaveQuiz() {
+    if (!Q || Q.done || (Q.idx === 0 && !Q.answered)) { goHome(); return; }
+    openSheet('<h2 class="sheet-title">' + T.leaveTitle + '</h2><p class="sheet-desc">' + T.leaveText + '</p>' +
+      '<div class="res-actions"><button class="btn primary big" data-act="stay">' + T.keepGoing + '</button>' +
+      '<button class="btn ghost" data-act="leave">' + T.leave + '</button></div>',
+      act => { closeSheet(); if (act === 'leave') goHome(); });
   }
 
   /* ---------------- quiz ---------------- */
@@ -644,7 +836,7 @@
     keyHandler = null;
     const title = Q.review ? T.review : Q.lv.num + '. ' + Q.lv.t;
     app.innerHTML =
-      '<div class="play">' +
+      '<div class="play quiz" style="--c:' + (Q.lv ? 'var(--s' + (Q.lv.stage + 1) + ')' : 'var(--primary)') + '">' +
         '<div class="play-top">' +
           '<button class="icon-btn" data-act="close" aria-label="' + esc(T.endQuiz) + '">' + icon('close') + '</button>' +
           '<div class="bar"><i style="width:' + (Q.idx / Q.list.length * 100) + '%"></i></div>' +
@@ -655,7 +847,7 @@
       '</div>' +
       '<div class="feedback" id="fb" aria-live="polite"></div>';
     window.scrollTo(0, 0);
-    $('[data-act=close]', app).addEventListener('click', goHome);
+    $('[data-act=close]', app).addEventListener('click', leaveQuiz);
     MODES[q.mode](q, $('#qm'));
   }
 
@@ -709,6 +901,7 @@
     const q = Q.cur;
     Q.answered = true;
     Q.at = Date.now();
+    bumpToday();
     if (!q.tries) {
       if (ok) { Q.ok++; delete S.mistakes[q.it.key]; }
       else Q.missed.push(q.it);
@@ -736,6 +929,11 @@
     nb.addEventListener('click', nextQ);
     setTimeout(() => { try { nb.focus({ preventScroll: true }); } catch (e) { /* */ } }, 30);
     keyHandler = quizNextKey;
+    if (ok && S.settings.autoNext) {
+      const cur = Q.cur;
+      fb.classList.add('auto');
+      setTimeout(() => { if (Q && Q.cur === cur && Q.answered && !sheetEl) nextQ(); }, o.tip || o.typo ? 2600 : 1100);
+    }
   }
 
   function quizNextKey(e) {
@@ -981,6 +1179,7 @@
   }
 
   function renderResult() {
+    Q.done = true;
     const pct = Q.total ? Q.ok / Q.total : 0;
     const stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
     touchStreak();
@@ -1004,13 +1203,15 @@
     }
     actions += '<button class="btn ghost" data-act="home">' + T.menu + '</button>';
 
+    if (stars >= 2 || (Q.review && Q.total && Q.ok === Q.total)) setTimeout(confetti, 250);
     app.innerHTML =
-      '<div class="play result-screen">' +
+      '<div class="play result-screen" style="--c:' + (lv ? 'var(--s' + (lv.stage + 1) + ')' : 'var(--primary)') + '">' +
         '<div class="play-top"><button class="icon-btn" data-act="home" aria-label="' + esc(T.backMenu) + '">' + icon('close') + '</button><div class="bar"><i style="width:100%"></i></div></div>' +
         '<div class="result pop">' +
           '<div class="res-emoji">' + head[0] + '</div>' +
           '<h2>' + head[1] + '</h2>' +
           (Q.review ? '' : starsHTML(stars, 'xl')) +
+          '<div class="res-pct" style="--p:' + Math.round(pct * 100) + '">' + ring(pct, '<b>' + Math.round(pct * 100) + '%</b>') + '</div>' +
           '<p class="res-score">' + T.score(Q.ok, Q.total, Math.round(pct * 100)) + '</p>' +
           (improved && stars ? '<p class="res-note">' + T.record + '</p>' : '') +
           (!Q.review && stars === 0 ? '<p class="muted">' + T.starRule + '</p>' : '') +
@@ -1038,6 +1239,26 @@
         if (p) { e.preventDefault(); p.click(); }
       }
     };
+  }
+
+  // krótkie konfetti po dobrym wyniku (bez animacji, gdy system prosi o ograniczenie ruchu)
+  function confetti() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const box = document.createElement('div');
+    box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
+    const cols = ['#5b4cf0', '#10b981', '#f5b324', '#e5484d', '#3b82f6', '#d946ef'];
+    for (let i = 0; i < 36; i++) {
+      const c = document.createElement('i');
+      c.style.left = (Math.random() * 100) + '%';
+      c.style.background = cols[i % cols.length];
+      c.style.animationDelay = (Math.random() * .35) + 's';
+      c.style.animationDuration = (1.4 + Math.random() * 1.1) + 's';
+      c.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+      c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+      box.appendChild(c);
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 3000);
   }
 
   /* ---------------- flashcards ---------------- */
@@ -1087,7 +1308,7 @@
     F.flipped = false; F.seenBack = false; F.busy = false;
     const canRev = F.lv.k === 'v' || F.lv.k === 'm';
     app.innerHTML =
-      '<div class="play flash">' +
+      '<div class="play flash" style="--c:var(--s' + (F.lv.stage + 1) + ')">' +
         '<div class="play-top">' +
           '<button class="icon-btn" data-act="close" aria-label="' + esc(T.closeFlash) + '">' + icon('close') + '</button>' +
           '<div class="bar"><i style="width:' + (F.known / F.total * 100) + '%"></i></div>' +
@@ -1126,6 +1347,7 @@
       if (F.busy || !F.seenBack) return;
       F.busy = true;
       const cur = F.deck.shift();
+      bumpToday(); save();
       if (kind === 'know') F.known++;
       else F.deck.splice(Math.min(3, F.deck.length), 0, cur);
       const dir = kind === 'know' ? 1 : -1;

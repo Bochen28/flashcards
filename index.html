@@ -4,54 +4,103 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fiszki</title>
+  <meta name="description" content="Fiszki i krótkie ćwiczenia językowe – angielski, ukraiński i hiszpański dla Polaków oraz angielski dla україномовних.">
   <meta name="theme-color" content="#5b4cf0">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/app-180.png">
+  <script src="shared/prefs.js?v=1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap">
   <style>
-    :root { --bg:#f3f4fb; --surface:#fff; --text:#1c1f35; --muted:#676c8c; --border:#e1e4f0; color-scheme:light; }
-    @media (prefers-color-scheme: dark) { :root { --bg:#0f111a; --surface:#191c2a; --text:#e9eaf4; --muted:#9a9fbe; --border:#2d3248; color-scheme:dark; } }
+    :root { --bg:#f3f4fb; --surface:#fff; --text:#1c1f35; --muted:#676c8c; --border:#e1e4f0; --accent:#5b4cf0; --accent-soft:#ecebfe; color-scheme:light; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg:#0f111a; --surface:#191c2a; --text:#e9eaf4; --muted:#9a9fbe; --border:#2d3248; --accent:#7867ff; --accent-soft:#272450; color-scheme:dark; }
+    }
+    :root[data-theme="dark"] { --bg:#0f111a; --surface:#191c2a; --text:#e9eaf4; --muted:#9a9fbe; --border:#2d3248; --accent:#7867ff; --accent-soft:#272450; color-scheme:dark; }
+    html[data-size="large"] { font-size:112.5%; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px 16px; background:var(--bg); color:var(--text);
            font-family:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
-    main { width:100%; max-width:440px; display:grid; gap:16px; text-align:center; }
-    h1 { margin:0; font-size:2rem; font-weight:900; }
+    main { width:100%; max-width:460px; display:grid; gap:12px; text-align:center; }
+    main > p { margin-bottom:6px; }
+    h1 { margin:0; font-size:2rem; font-weight:900; letter-spacing:-.01em; }
+    .app-logo { width:64px; height:64px; margin:0 auto -4px; display:block; border-radius:18px; box-shadow:0 8px 22px rgba(91,76,240,.3); }
     p { margin:0; color:var(--muted); }
-    a.card { display:flex; align-items:center; gap:16px; padding:18px; border-radius:20px; background:var(--surface); color:inherit; text-decoration:none;
-             border:2px solid var(--border); border-bottom-width:5px; text-align:left; transition:transform .1s, border-color .15s; }
-    a.card:hover { border-color:#5b4cf0; }
-    a.card:active { transform:translateY(2px); }
-    .logo { display:grid; place-items:center; width:56px; height:56px; flex:none; border-radius:16px; color:#fff; font-weight:900; font-size:1.2rem;
+    a.card { position:relative; display:flex; align-items:center; gap:16px; padding:16px 18px; border-radius:20px; background:var(--surface); color:inherit; text-decoration:none;
+             border:1px solid var(--border); box-shadow:0 1px 2px rgba(23,25,60,.04), 0 6px 18px rgba(23,25,60,.06); text-align:left;
+             transition:transform .12s, border-color .15s, box-shadow .15s; }
+    a.card:hover { border-color:var(--accent); transform:translateY(-1px); box-shadow:0 2px 4px rgba(23,25,60,.06), 0 14px 32px rgba(23,25,60,.12); }
+    a.card:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+    a.card:active { transform:scale(.99); }
+    a.card.last { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+    a.card::after { content:''; width:9px; height:9px; flex:none; margin-left:auto; border-right:2.5px solid var(--muted); border-top:2.5px solid var(--muted); transform:rotate(45deg); opacity:.6; }
+    .logo { display:grid; place-items:center; width:52px; height:52px; flex:none; border-radius:15px; color:#fff; font-weight:900; font-size:1.2rem;
             background:linear-gradient(135deg,#5b4cf0,#8b3df0); }
     .logo.ua { background:linear-gradient(135deg,#0057b7,#2f7de1); color:#ffd500; }
     .logo.es { background:linear-gradient(135deg,#c60b1e,#e2452f); color:#ffc400; }
     .card b { display:block; font-size:1.2rem; }
+    .card .sub { color:var(--muted); }
+    .card .prog { display:block; margin-top:6px; font-size:.88rem; font-weight:900; color:var(--accent); }
+    .card .prog:empty { display:none; }
+    .badge { position:absolute; top:-11px; right:14px; background:var(--accent); color:#fff; font-size:.75rem; font-weight:900;
+             padding:2px 10px; border-radius:99px; text-transform:uppercase; letter-spacing:.03em; }
+    .uk { display:grid; gap:12px; margin-top:12px; }
+    .uk > p { font-weight:900; font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; }
   </style>
 </head>
 <body>
   <main>
+    <img class="app-logo" src="icons/app-192.png" alt="" width="64" height="64">
     <h1>Fiszki</h1>
     <p>Wybierz język, którego chcesz się uczyć.</p>
-    <a class="card" href="english/">
+    <a class="card" href="english/" data-key="fiszki-angielski-v1">
       <span class="logo">EN</span>
-      <span><b>Angielski</b><span style="color:var(--muted)">Ponad 10 000 ćwiczeń i 47 lekcji – od pierwszych słów do C1</span></span>
+      <span><b>Angielski</b><span class="sub">Ponad 10 000 ćwiczeń i 47 lekcji – od pierwszych słów do C1</span><span class="prog"></span></span>
     </a>
-    <a class="card" href="ukrainian/">
+    <a class="card" href="ukrainian/" data-key="fiszki-ukrainski-v1">
       <span class="logo ua">UA</span>
-      <span><b>Ukraiński</b><span style="color:var(--muted)">Ponad 10 000 ćwiczeń i 41 lekcji – od alfabetu do C1</span></span>
+      <span><b>Ukraiński</b><span class="sub">Ponad 10 000 ćwiczeń i 41 lekcji – od alfabetu do C1</span><span class="prog"></span></span>
     </a>
-    <a class="card" href="spanish/">
+    <a class="card" href="spanish/" data-key="fiszki-hiszpanski-v1">
       <span class="logo es">ES</span>
-      <span><b>Hiszpański</b><span style="color:var(--muted)">Ponad 10 000 ćwiczeń i 49 lekcji – od pierwszych słów do C1</span></span>
+      <span><b>Hiszpański</b><span class="sub">Ponad 10 000 ćwiczeń i 49 lekcji – od pierwszych słów do C1</span><span class="prog"></span></span>
     </a>
-    <section lang="uk" style="display:grid;gap:16px;margin-top:12px">
+    <section class="uk" lang="uk">
       <p>Для україномовних</p>
-      <a class="card" href="uk/english/">
+      <a class="card" href="uk/english/" data-key="kartky-angliiska-v1">
         <span class="logo">EN</span>
-        <span><b>Англійська</b><span style="color:var(--muted)">Понад 10 000 вправ і 47 уроків українською – від перших слів до C1</span></span>
+        <span><b>Англійська</b><span class="sub">Понад 10 000 вправ і 47 уроків українською – від перших слів до C1</span><span class="prog"></span></span>
       </a>
     </section>
   </main>
+  <script>
+    /* postępy z każdego kursu (zapisane w tej przeglądarce) i znaczek przy ostatnio używanym */
+    (function () {
+      var TXT = {
+        pl: { done: 'Ukończone poziomy: ', last: 'Ostatnio' },
+        uk: { done: 'Пройдені рівні: ', last: 'Востаннє' }
+      };
+      var last = null;
+      try { last = localStorage.getItem('fiszki-last'); } catch (e) { /* */ }
+      var day = function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+      var today = day(new Date()), y = new Date(); y.setDate(y.getDate() - 1); var yday = day(y);
+      Array.prototype.forEach.call(document.querySelectorAll('a.card[data-key]'), function (a) {
+        var key = a.getAttribute('data-key'), t = TXT[a.closest('[lang="uk"]') ? 'uk' : 'pl'], d = null;
+        try { d = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { d = null; }
+        if (d && d.stars) {
+          var done = 0, stars = 0;
+          Object.keys(d.stars).forEach(function (k) { var n = +d.stars[k] || 0; if (n > 0) done++; stars += n; });
+          var st = d.streak && (d.streak.last === today || d.streak.last === yday) ? d.streak.n : 0;
+          if (done) a.querySelector('.prog').textContent = t.done + done + ' · ★ ' + stars + (st ? ' · 🔥 ' + st : '');
+        }
+        if (key === last) {
+          a.classList.add('last');
+          var b = document.createElement('span'); b.className = 'badge'; b.textContent = t.last; a.appendChild(b);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

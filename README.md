@@ -14,6 +14,17 @@ A static site with no build step. `shared/` holds the app and styles used by eve
 
 Run locally: `python -m http.server` in this folder, then open http://localhost:8000/.
 
+## Site-wide features
+
+- `shared/prefs.js` loads in every page's `<head>`: it applies the theme and text size chosen in settings (shared by all courses, stored as `fiszki-theme` / `fiszki-size`) and registers `sw.js`.
+- `sw.js` makes the site work offline: it always tries the network first and falls back to a saved copy of anything already opened (pages, data, lessons, played recordings). Bump `CACHE` in it only to drop old copies.
+- Each course has a `manifest.webmanifest` and PNG icons in `icons/`, so it can be installed on a phone's home screen.
+- The language picker (`index.html`) shows progress from each course's localStorage key (`data-key` on its card) and marks the course opened last (`fiszki-last`).
+- The home screen greets the learner, shows the next step (lesson or level), a mistakes review, today's answers against a daily goal (10/20/40, set in settings), the day streak, stars and course progress. A short "How it works" card shows for new learners until closed.
+- On a course page: search finds levels and lessons by title or by any word inside (either language, accents optional); press `/` to jump to it. Settings also hold auto-advance after a correct answer and progress backup to a JSON file.
+
+When adding a course, give its page the same `<head>` lines (manifest, apple-touch-icon, `prefs.js`) and add a card with its `data-key` to the picker.
+
 ## Ukrainian audio
 
 Most browsers have no Ukrainian voice, so every Ukrainian word and sentence the app reads aloud is pre-recorded in `ukrainian/audio/` (MP3, file name = hash of the text). The voice is "tetiana" from [Piper](https://github.com/OHF-Voice/piper1-gpl) (model licence Apache 2.0). English uses the browser's own voices.
